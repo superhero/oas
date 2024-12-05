@@ -1,0 +1,24 @@
+{
+  "bootstrap": 
+  {
+    "@superhero/oas": true
+  },
+  "locator":
+  {
+    "@superhero/oas": true,
+    "@superhero/oas/components/*": "./components/*.js",
+    "@superhero/oas/middleware/*": "./middleware/*.js"
+  },
+  "oas":
+  {
+    "components": 
+    {
+      "headers"       : {},
+      "parameters"    : {},
+      "requestBodies" : {},
+      "responses"     : {},
+      "schemas"       : {}
+    },
+    "paths": {}
+  }
+}

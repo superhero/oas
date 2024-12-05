@@ -1,0 +1,40 @@
+{
+  "name": "@superhero/oas",
+  "version": "4.0.0",
+  "description": "OpenAPI Specification (OAS) router",
+  "keywords": [
+    "OAS",
+    "OpenAPI",
+    "Router"
+  ],
+  "main": "paths.js",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./components/*": "./components/*.js",
+    "./middleware/*": "./middleware/*.js"
+  },
+  "dependencies": {
+    "@superhero/deep": "^4.1.0",
+    "@superhero/http-server": "^4.2.7"
+  },
+  "devDependencies": {
+    "@superhero/config": "^4.1.2",
+    "@superhero/http-request": "^4.0.10",
+    "@superhero/locator": "^4.1.3",
+    "@superhero/syntax-check": "0.0.2"
+  },
+  "scripts": {
+    "syntax-check": "syntax-check",
+    "test": "node --trace-warnings --test --experimental-test-coverage"
+  },
+  "author": {
+    "name": "Erik Landvall",
+    "email": "erik@landvall.se"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/superhero/oas"
+  }
+}
