@@ -23,12 +23,20 @@ suite('@superhero/oas', () =>
     config = new Config()
     locate.set('@superhero/config', config)
     
-    await config.add('@superhero/http-server')
+    {
+      const { filepath, config: resolved } = await config.resolve('@superhero/http-server')
+      config.add(filepath, resolved)
+    }
+    
     locate.pathResolver.basePath = path.resolve('./node_modules/@superhero/http-server')
     await locate.eagerload(config.find('locator'))
     locate.pathResolver.basePath = path.resolve('.')
 
-    await config.add(path.resolve('./config.json'))
+    {
+      const { filepath, config: resolved } = await config.resolve(path.resolve('./config.json'))
+      await config.add(filepath, resolved)
+    }
+
     await locate.eagerload(
     {
       '@superhero/oas'                           : path.resolve('./index.js'),
