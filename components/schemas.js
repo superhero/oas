@@ -274,13 +274,8 @@ export default class Schemas extends ComponentsAbstraction
   // Attempting to support both 3.0 and 3.1 OAS tuple validation
   conformTypeArrayItems(component, instance, isWriting)
   {
-    const 
-      output        = [],
-      itemComponent = component.prefixItems?.[i] ?? Array.isArray(component.items) 
-                                                  ? component.items[i % component.items.length] 
-                                                  : component.items
-
-    if(undefined === itemComponent)
+    if(false === !!component.items
+    || false === (Array.isArray(component.items) && component.items.length > 0))
     {
       const error = new Error(`Invalid "array" schema component`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
@@ -288,15 +283,37 @@ export default class Schemas extends ComponentsAbstraction
       throw error
     }
 
-    for(let i = 0; i < instance.length; i++)
-    {
-      const alteredValue = this.conform(itemComponent, instance[i], isWriting)
-
-      if(alteredValue !== undefined
-      || instance[i]  === undefined)
+    const 
+      items   = Array.isArray(component.items)        ? component.items       : [ component.items ],
+      output  = [],
+      conform = (itemComponent, itemInstance) =>
       {
-        output.push(alteredValue)
+        const conformed = this.conform(itemComponent, itemInstance, isWriting)
+
+        if(conformed    !== undefined
+        || itemInstance === undefined)
+        {
+          output.push(conformed)
+        }
       }
+
+    let i = 0
+
+    if(component.prefixItems)
+    {
+      const prefixItems = Array.isArray(component.prefixItems)  
+                        ? component.prefixItems 
+                        : [ component.prefixItems ]
+
+      for(; i < instance.length && i < prefixItems.length; i++)
+      {
+        conform(prefixItems[i], instance[i])
+      }
+    }
+
+    for(let n = 0; i < instance.length; i++, n++)
+    {
+      conform(items[n % items.length], instance[i])
     }
 
     return output
