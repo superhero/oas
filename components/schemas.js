@@ -935,7 +935,7 @@ export default class Schemas extends ComponentsAbstraction
 
   validateTypeObjectAdditionalProperties(component, instance)
   {
-    if(false === !!component.additionalProperties)
+    if(false === component.additionalProperties)
     {
       const properties = new Set(Object.keys(component.properties ?? {}))
 
