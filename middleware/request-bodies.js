@@ -20,15 +20,18 @@ export default class RequestBodiesMiddleware
     requestBody && this.oas.requestBodies.conform(requestBody, request)
   }
 
-  onError(error, request, session)
+  onError(reason, request, session)
   {
-    if('E_OAS_INVALID_INSTANCE' === error.code)
+    if('E_OAS_INVALID_INSTANCE' === reason.code)
     {
-      error.status = 400
-      return session.abortion.abort(error)
+      reason.status = 400
+      return session.abortion.abort(reason)
     }
     else
     {
+      const error  = new Error(`Unable to conform the request-body for operation ${session.route.oas[request.method].operationId}`)
+      error.code   = 'E_OAS_FAILED_TO_CONFORM_REQUEST_BODY'
+      error.cause  = reason
       throw error
     }
   }

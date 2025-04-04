@@ -362,9 +362,9 @@ export default class Schemas extends ComponentsAbstraction
 
   conformTypeNumber(component, instance, instanceType)
   {
-    instance = this.conformTypeNumberString(instance)
+    instance = this.transformTypeNumber(instance, instanceType)
 
-    this.validateTypeNumberInstanceType(component, instance, instanceType)
+    this.validateTypeNumberInstanceType(component, instance)
     this.validateTypeNumberInteger(component, instance)
     this.validateTypeNumberMinimum(component, instance)
     this.validateTypeNumberMaximum(component, instance)
@@ -374,15 +374,13 @@ export default class Schemas extends ComponentsAbstraction
     return instance
   }
 
-  conformTypeNumberString(instance)
+  transformTypeNumber(instance, instanceType)
   {
-    if('string' === typeof instance)
+    switch(instanceType)
     {
-      return Number(instance)
-    }
-    else
-    {
-      return instance
+      case '[object String]' : return Number(instance)
+      case '[object Date]'   : return instance.getTime()
+      default                : return instance
     }
   }
 
@@ -463,7 +461,7 @@ export default class Schemas extends ComponentsAbstraction
 
     if(false === pointer.startsWith('/components/schemas/'))
     {
-      const error = new Error(`The ref pointer "${pointer}" must point to a schema component`)
+      const error = new Error(`The ref pointer "#${pointer}" must point to a schema component`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
       throw error
     }
@@ -771,7 +769,7 @@ export default class Schemas extends ComponentsAbstraction
     return instance
   }
 
-  validateTypeNumberInstanceType(component, instance, instanceType)
+  validateTypeNumberInstanceType(component, instance)
   {
     if(false === Number.isFinite(instance))
     {

@@ -22,9 +22,28 @@ export default class ResponsesMiddleware
     {
       const 
         status    = session.view.status,
-        responses = session.route.oas[request.method].responses
+        operation = session.route.oas[request.method],
+        responses = operation.responses
 
-      this.oas.responses.conform(responses[status], session.view)
+      if(status in responses)
+      {
+        this.oas.responses.conform(responses[status], session.view)
+      }
+      else
+      {
+        const error = new Error(`Invalid status code: ${status}`)
+        error.code  = 'E_OAS_INVALID_SPECIFICATION'
+        error.cause = `The operation supports status codes: ${Object.keys(responses).join(', ')}`
+        throw error
+      }
     }
+  }
+
+  onError(reason, request, session)
+  {
+    const error = new Error(`Unable to conform the response for operation ${session.route.oas[request.method].operationId}`)
+    error.code  = 'E_OAS_INVALID_RESPONSE'
+    error.cause = reason
+    throw error
   }
 }
