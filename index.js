@@ -63,16 +63,19 @@ export default class OAS
   {
     const
       dispatcher  = '@superhero/http-server/dispatcher/upstream/method',
-      route       = { dispatcher }
+      route       = { dispatcher },
+      oas         = {}
 
-    Object.defineProperty(route, 'oas', { value: pathObject })
-
-    for(const method in pathObject)
+    for(let method in pathObject)
     {
       const operation = pathObject[method]
       this.validateOperation(operation)
+      method = method.toLowerCase()
       route['method.' + method] = this.transformOperationIdToDispatcherName(operation.operationId)
+      oas[method.toUpperCase()] = operation
     }
+
+    Object.defineProperty(route, 'oas', { value: oas })
 
     const
       contentTypeDispatcherPrefix = '@superhero/http-server/dispatcher/upstream/header/content-type/',

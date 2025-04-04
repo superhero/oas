@@ -16,10 +16,7 @@ export default class RequestBodiesMiddleware
 
   dispatch(request, session)
   {
-    const 
-      method      = request.method.toLowerCase(),
-      requestBody = session.route.oas[method].requestBody
-
+    const requestBody = session.route.oas[request.method].requestBody
     requestBody && this.oas.requestBodies.conform(requestBody, request)
   }
 

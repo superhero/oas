@@ -21,9 +21,8 @@ export default class ResponsesMiddleware
     if(false === !!session.abortion.signal.aborted)
     {
       const 
-        method    = request.method.toLowerCase(),
         status    = session.view.status,
-        responses = session.route.oas[method].responses
+        responses = session.route.oas[request.method].responses
 
       this.oas.responses.conform(responses[status], session.view)
     }

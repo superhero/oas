@@ -16,9 +16,7 @@ export default class ParametersMiddleware
 
   dispatch(request, session)
   {
-    const
-      method      = request.method.toLowerCase(),
-      parameters  = session.route.oas[method].parameters
+    const parameters = session.route.oas[request.method].parameters
 
     if(parameters)
     {
