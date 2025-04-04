@@ -63,7 +63,7 @@ export default class OAS
   {
     const
       dispatcher  = '@superhero/http-server/dispatcher/upstream/method',
-      route       = { dispatcher, foo: 'bar' }
+      route       = { dispatcher }
 
     Object.defineProperty(route, 'oas', { value: pathObject })
 
