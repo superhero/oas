@@ -274,12 +274,19 @@ export default class Schemas extends ComponentsAbstraction
   // Attempting to support both 3.0 and 3.1 OAS tuple validation
   conformTypeArrayItems(component, instance, isWriting)
   {
-    if(false === !!component.items
-    || false === (Array.isArray(component.items) && component.items.length > 0))
+    if(false === !!component.items)
     {
       const error = new Error(`Invalid "array" schema component`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
       error.cause = 'The schema type: "array" must have an "items" attribute'
+      throw error
+    }
+
+    if(Array.isArray(component.items) && component.items.length === 0)
+    {
+      const error = new Error(`Invalid "array" schema component`)
+      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.cause = 'The schema type: "array" must have an "items" attribute with at least one item'
       throw error
     }
 
