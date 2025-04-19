@@ -46,95 +46,105 @@ export default class Schemas extends ComponentsAbstraction
 
   conform(component, instance, isWriting)
   {
-    if(component.$ref)
+    try
     {
-      return this.conformRef(component.$ref, instance, isWriting)
-    }
-
-    if('readOnly' in component
-    && true === !!isWriting)
-    {
-      return
-    }
-
-    if('writeOnly' in component
-    && false === !!isWriting)
-    {
-      return
-    }
-
-    instance = this.conformDefault(component, instance)
-    instance = this.conformIfThenElse(component, instance, isWriting)
-    instance = this.conformAllOf(component, instance, isWriting)
-    instance = this.conformAnyOf(component, instance, isWriting)
-    instance = this.conformOneOf(component, instance, isWriting)
-
-    const instanceType = Object.prototype.toString.call(instance)
-
-    if('[object Null]'      !== instanceType
-    && '[object Undefined]' !== instanceType)
-    {
-      switch(component.type)
+      if(component.$ref)
       {
-        case 'array':
+        return this.conformRef(component.$ref, instance, isWriting)
+      }
+
+      if('readOnly' in component
+      && true === !!isWriting)
+      {
+        return
+      }
+
+      if('writeOnly' in component
+      && false === !!isWriting)
+      {
+        return
+      }
+
+      instance = this.conformDefault(component, instance)
+      instance = this.conformIfThenElse(component, instance, isWriting)
+      instance = this.conformAllOf(component, instance, isWriting)
+      instance = this.conformAnyOf(component, instance, isWriting)
+      instance = this.conformOneOf(component, instance, isWriting)
+
+      const instanceType = Object.prototype.toString.call(instance)
+
+      if('[object Null]'      !== instanceType
+      && '[object Undefined]' !== instanceType)
+      {
+        switch(component.type)
         {
-          instance = this.conformTypeArray(component, instance, instanceType, isWriting)
-          break
-        }
-        case 'boolean':
-        {
-          instance = this.conformTypeBoolean(instance, instanceType)
-          break
-        }
-        case 'integer':
-        case 'number':
-        {
-          instance = this.conformTypeNumber(component, instance, instanceType)
-          break
-        }
-        case 'object':
-        {
-          instance = this.conformTypeObject(component, instance, instanceType, isWriting)
-          break
-        }
-        case 'string':
-        {
-          instance = this.conformTypeString(component, instance, instanceType)
-          break
-        }
-        case 'null':
-        {
-          instance = this.conformTypeNull(component, instance, instanceType)
-          break
-        }
-        case undefined:
-        {
-          break
-        }
-        default:
-        {
-          const error = new Error(`Invalid component type ${component.type}`)
-          error.code  = 'E_OAS_INVALID_SPECIFICATION'
-          throw error
+          case 'array':
+          {
+            instance = this.conformTypeArray(component, instance, instanceType, isWriting)
+            break
+          }
+          case 'boolean':
+          {
+            instance = this.conformTypeBoolean(instance, instanceType)
+            break
+          }
+          case 'integer':
+          case 'number':
+          {
+            instance = this.conformTypeNumber(component, instance, instanceType)
+            break
+          }
+          case 'object':
+          {
+            instance = this.conformTypeObject(component, instance, instanceType, isWriting)
+            break
+          }
+          case 'string':
+          {
+            instance = this.conformTypeString(component, instance, instanceType)
+            break
+          }
+          case 'null':
+          {
+            instance = this.conformTypeNull(component, instance, instanceType)
+            break
+          }
+          case undefined:
+          {
+            break
+          }
+          default:
+          {
+            const error = new Error(`Invalid component type ${component.type}`)
+            error.code  = 'E_OAS_INVALID_SPECIFICATION'
+            throw error
+          }
         }
       }
-    }
 
-    if(null   === instance 
-    && true   !== component.nullable 
-    && 'null' !== component.type)
+      if(null   === instance 
+      && true   !== component.nullable 
+      && 'null' !== component.type)
+      {
+        const error = new Error(`Invalid instance`)
+        error.code  = 'E_OAS_INVALID_INSTANCE'
+        error.cause = 'The instance must NOT be null'
+        throw error
+      }
+
+      this.validateNot(component, instance, isWriting)
+      this.validateConst(component, instance)
+      this.validateEnum(component, instance)
+
+      return instance
+    }
+    catch(reason)
     {
-      const error = new Error(`Invalid instance`)
-      error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = 'The instance must NOT be null'
+      const error = new Error(`Invalid schema`)
+      error.code  = 'E_OAS_INVALID_SCHEMA'
+      error.cause = reason
       throw error
     }
-
-    this.validateNot(component, instance, isWriting)
-    this.validateConst(component, instance)
-    this.validateEnum(component, instance)
-
-    return instance
   }
 
   conformDefault(component, instance)
@@ -219,7 +229,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid instance`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error('The instance must match at least one of the "anyOf" specifiations')
+        error.cause = 'The instance must match at least one of the "anyOf" specifiations'
         throw error
       }
     }
@@ -388,7 +398,7 @@ export default class Schemas extends ComponentsAbstraction
   {
     this.validateTypeObjectInstanceType(instanceType)
 
-    instance = this.confirmTypeObjectProperties(component, instance, isWriting)
+    instance = this.conformTypeObjectProperties(component, instance, isWriting)
 
     this.validateTypeObjectRequired(component, instance)
     this.validateTypeObjectAdditionalProperties(component, instance)
@@ -399,20 +409,39 @@ export default class Schemas extends ComponentsAbstraction
     return instance
   }
 
-  confirmTypeObjectProperties(component, instance, isWriting)
+  conformTypeObjectProperties(component, instance, isWriting)
   {
     const output = deepclone(instance)
 
     if('properties' in component)
     {
+      const errors = []
+
       for(const name in component.properties)
       {
-        output[name] = this.conform(component.properties[name], output[name], isWriting)
-
-        if(undefined === output[name])
+        try
         {
-          delete output[name]
+          output[name] = this.conform(component.properties[name], output[name], isWriting)
+          if(undefined === output[name])
+          {
+            delete output[name]
+          }
         }
+        catch(reason)
+        {
+          const error = new Error(`Invalid property "${name}"`)
+          error.code  = 'E_OAS_INVALID_PROPERTY'
+          error.cause = reason
+          errors.push(error)
+        }
+      }
+
+      if(errors.length)
+      {
+        const error = new Error(`Invalid properties`)
+        error.code  = 'E_OAS_INVALID_INSTANCE'
+        error.cause = errors
+        throw error
       }
     }
 
@@ -544,7 +573,7 @@ export default class Schemas extends ComponentsAbstraction
         {
           const error = new Error('Invalid component enum')
           error.code  = 'E_OAS_INVALID_SPECIFICATION'
-          error.cause = new Error('The component enum must be an array of arrays')
+          error.cause = 'The component enum must be an array of arrays'
           throw error
         }
       }
@@ -580,7 +609,7 @@ export default class Schemas extends ComponentsAbstraction
 
           const error = new Error('Invalid component enum')
           error.code  = 'E_OAS_INVALID_SPECIFICATION'
-          error.cause = new Error('The component enum must be an array of booleans')
+          error.cause = 'The component enum must be an array of booleans'
           throw error
         }
       }
@@ -607,7 +636,7 @@ export default class Schemas extends ComponentsAbstraction
 
           const error = new Error('Invalid component enum')
           error.code  = 'E_OAS_INVALID_SPECIFICATION'
-          error.cause = new Error('The component enum must be an array of numbers')
+          error.cause = 'The component enum must be an array of numbers'
           throw error
         }
       }
@@ -634,7 +663,7 @@ export default class Schemas extends ComponentsAbstraction
 
           const error = new Error('Invalid component enum')
           error.code  = 'E_OAS_INVALID_SPECIFICATION'
-          error.cause = new Error('The component enum must be an array of strings')
+          error.cause = 'The component enum must be an array of strings'
           throw error
         }
       }
@@ -661,7 +690,7 @@ export default class Schemas extends ComponentsAbstraction
 
           const error = new Error('Invalid component enum')
           error.code  = 'E_OAS_INVALID_SPECIFICATION'
-          error.cause = new Error('The component enum must be an array of objects')
+          error.cause = 'The component enum must be an array of objects'
           throw error
         }
       }
@@ -702,7 +731,7 @@ export default class Schemas extends ComponentsAbstraction
         {
           const error = new Error(`Invalid amount of array items ${instance.length}`)
           error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error('The array can not have additional items')
+          error.cause = 'The array can not have additional items'
           throw error
         }
       }
@@ -717,7 +746,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid amount of array items ${instance.length}`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The array must have at least ${component.minItems} items`)
+        error.cause = `The array must have at least ${component.minItems} items`
         throw error
       }
     }
@@ -731,7 +760,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid amount of array items ${instance.length}`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The array can not have more than ${component.maxItems} items`)
+        error.cause = `The array can not have more than ${component.maxItems} items`
         throw error
       }
     }
@@ -787,7 +816,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid ${component.type} insance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error(`The ${component.type} is not an integer`)
+      error.cause = `The ${component.type} is not an integer`
       throw error
     }
   }
@@ -802,7 +831,7 @@ export default class Schemas extends ComponentsAbstraction
         {
           const error = new Error(`Invalid ${component.type} instance ${instance}`)
           error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error(`The ${component.type} must be greater than ${component.minimum}`)
+          error.cause = `The ${component.type} must be greater than ${component.minimum}`
           throw error
         }
       }
@@ -812,7 +841,7 @@ export default class Schemas extends ComponentsAbstraction
         {
           const error = new Error(`Invalid ${component.type} instance ${instance}`)
           error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error(`The ${component.type} must be greater than or equal to ${component.minimum}`)
+          error.cause = `The ${component.type} must be greater than or equal to ${component.minimum}`
           throw error
         }
       }
@@ -829,7 +858,7 @@ export default class Schemas extends ComponentsAbstraction
         {
           const error = new Error(`Invalid ${component.type} instance ${instance}`)
           error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error(`The ${component.type} must be less than ${component.maximum}`)
+          error.cause = `The ${component.type} must be less than ${component.maximum}`
           throw error
         }
       }
@@ -839,7 +868,7 @@ export default class Schemas extends ComponentsAbstraction
         {
           const error = new Error(`Invalid ${component.type} instance ${instance}`)
           error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error(`The ${component.type} must be less than or equal to ${component.maximum}`)
+          error.cause = `The ${component.type} must be less than or equal to ${component.maximum}`
           throw error
         }
       }
@@ -854,7 +883,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid ${component.type} instance ${instance}`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The ${component.type} must be a multiple of ${component.multipleOf}`)
+        error.cause = `The ${component.type} must be a multiple of ${component.multipleOf}`
         throw error
       }
     }
@@ -868,7 +897,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid format ${component.format}`)
         error.code  = 'E_OAS_INVALID_SPECIFICATION'
-        error.cause = new Error('The provided format is unknown')
+        error.cause = 'The provided format is unknown'
         throw error
       }
 
@@ -894,7 +923,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid int32 format ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The int32 instance must be between -2147483648 and 2147483647')
+      error.cause = 'The int32 instance must be between -2147483648 and 2147483647'
       throw error
     }
   }
@@ -906,7 +935,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid int64 format ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The int64 instance must be between -9007199254740991 and 9007199254740991')
+      error.cause = 'The int64 instance must be between -9007199254740991 and 9007199254740991'
       throw error
     }
   }
@@ -925,15 +954,22 @@ export default class Schemas extends ComponentsAbstraction
   {
     if('required' in component)
     {
+      const missing = []
+
       for(const name of component.required)
       {
         if(undefined === instance[name])
         {
-          const error = new Error(`Invalid object instance`)
-          error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error(`The object must have a property named ${name}`)
-          throw error
+          missing.push(name)
         }
+      }
+
+      if(missing.length)
+      {
+        const error = new Error(`Missing required properties`)
+        error.code  = 'E_OAS_SCHEMA_OBJECT_MISSING_REQUIRED_PROPERTIES'
+        error.cause = `The object must have ${missing.length === 1 ? 'property' : 'properties'} ${listFormat.format(missing)}`
+        throw error
       }
     }
   }
@@ -960,9 +996,9 @@ export default class Schemas extends ComponentsAbstraction
     {
       if(Object.keys(instance).length < component.minProperties)
       {
-        const error = new Error(`Invalid amount of object instance properties`)
-        error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The object must have at least ${component.minProperties} properties`)
+        const error = new Error(`Invalid amount of properties in object instance`)
+        error.code  = 'E_OAS_SCHEMA_OBJECT_MIN_PROPERTIES'
+        error.cause = `The object must have at least ${component.minProperties} properties`
         throw error
       }
     }
@@ -975,8 +1011,8 @@ export default class Schemas extends ComponentsAbstraction
       if(Object.keys(instance).length > component.maxProperties)
       {
         const error = new Error(`Invalid amount of object instance properties`)
-        error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The object can not have more than ${component.maxProperties} properties`)
+        error.code  = 'E_OAS_SCHEMA_OBJECT_MIN_PROPERTIES'
+        error.cause = `The object can not have more than ${component.maxProperties} properties`
         throw error
       }
     }
@@ -997,7 +1033,7 @@ export default class Schemas extends ComponentsAbstraction
         catch(reason)
         {
           const error = new Error(`Invalid regexp pattern ${component.propertyNames.pattern}`)
-          error.code  = 'E_OAS_INVALID_SPECIFICATION'
+          error.code  = 'E_OAS_SCHEMA_OBJECT_PROPERTY_NAMES_INVALID_REGEXP'
           error.cause = reason
           throw error
         }
@@ -1006,18 +1042,18 @@ export default class Schemas extends ComponentsAbstraction
         {
           if(false === regexp.test(name))
           {
-            const error = new Error(`Invalid object instance property name ${name}`)
-            error.code  = 'E_OAS_INVALID_INSTANCE'
-            error.cause = new Error(`The object property name must match the pattern ${component.propertyNames.pattern}`)
+            const error = new Error(`Invalid object property name ${name}`)
+            error.code  = 'E_OAS_SCHEMA_OBJECT_PROPERTY_NAMES_INVALID_NAME'
+            error.cause = `The object property name "${name}" must match the pattern ${component.propertyNames.pattern}`
             throw error
           }
         }
       }
       else
       {
-        const error = new Error(`Invalid propertyNames in component`)
+        const error = new Error(`Invalid "propertyNames" attribute in object component`)
         error.code  = 'E_OAS_INVALID_SPECIFICATION'
-        error.cause = new Error('The propertyNames component must have a "pattern" attribute')
+        error.cause = 'The "propertyNames" attribute in the schema object component must define a "pattern" attribute'
         throw error
       }
     }
@@ -1041,7 +1077,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid string instance length ${instance.length}`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The string must have at least ${component.minLength} characters`)
+        error.cause = `The string must have at least ${component.minLength} characters`
         throw error
       }
     }
@@ -1055,7 +1091,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid string instance length ${instance.length}`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The string can not have more than ${component.maxLength} characters`)
+        error.cause = `The string can not have more than ${component.maxLength} characters`
         throw error
       }
     }
@@ -1083,7 +1119,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid string instance ${instance}`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The string must match the pattern ${component.pattern}`)
+        error.cause = `The string must match the pattern ${component.pattern}`
         throw error
       }
     }
@@ -1097,7 +1133,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid format ${component.format}`)
         error.code  = 'E_OAS_INVALID_SPECIFICATION'
-        error.cause = new Error('The provided format is unknown')
+        error.cause = 'The provided format is unknown'
         throw error
       }
 
@@ -1125,7 +1161,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid instance`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error('The instance must not match the "not" specifiations')
+        error.cause = 'The instance must not match the "not" specifiations'
         throw error
       }
     }
@@ -1143,7 +1179,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Invalid instance ${instance}`)
         error.code  = 'E_OAS_INVALID_INSTANCE'
-        error.cause = new Error(`The instance must be equal to ${component.const}`)
+        error.cause = `The instance must be equal to ${component.const}`
         error.cause.cause = reason
         throw error
       }
@@ -1179,14 +1215,14 @@ export default class Schemas extends ComponentsAbstraction
         {
           const error = new Error(`Invalid ${component.type} instance ${instance}`)
           error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error(`The ${component.type} must be one of: ${enumsList}`)
+          error.cause = `The ${component.type} must be one of: ${enumsList}`
           throw error
         }
         else
         {
           const error = new Error(`Invalid instance ${instance}`)
           error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = new Error(`The instance must be one of: ${enumsList}`)
+          error.cause = `The instance must be one of: ${enumsList}`
           throw error
         }
       }
@@ -1201,7 +1237,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid date instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The date must be in the format YYYY-MM-DD')
+      error.cause = 'The date must be in the format YYYY-MM-DD'
       throw error
     }
   }
@@ -1214,7 +1250,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid time instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The time must be in the format HH:MM:SS[.sss]')
+      error.cause = 'The time must be in the format HH:MM:SS[.sss]'
       throw error
     }
   }
@@ -1225,7 +1261,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid datetime instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The datetime must be a valid date')
+      error.cause = 'The datetime must be a valid date'
       throw error
     }
   }
@@ -1236,7 +1272,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid base64 instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The base64 must be in the format aGVsbG8=')
+      error.cause = 'The base64 must be in the format aGVsbG8='
       throw error
     }
   }
@@ -1247,7 +1283,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid email instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The email must be in the format example@domain')
+      error.cause = 'The email must be in the format example@domain'
       throw error
     }
   }
@@ -1258,7 +1294,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid ipv4 instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The ipv4 must be in valid ipv4 format')
+      error.cause = 'The ipv4 must be in valid ipv4 format'
       throw error
     }
   }
@@ -1269,7 +1305,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid ipv6 instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The ipv6 must be in valid ipv6 format')
+      error.cause = 'The ipv6 must be in valid ipv6 format'
       throw error
     }
   }
@@ -1296,7 +1332,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       const error = new Error(`Invalid UUID instance ${instance}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = new Error('The UUID must be in the format FFFFFFFF-FFFF-5FFF-BFFF-FFFFFFFFFFFF')
+      error.cause = 'The UUID must be in the format FFFFFFFF-FFFF-5FFF-BFFF-FFFFFFFFFFFF'
       throw error
     }
   }

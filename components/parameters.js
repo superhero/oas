@@ -15,14 +15,23 @@ export default class Parameters extends ComponentsAbstraction
   constructor(schemas)
   {
     super()
-    
     this.schemas = schemas
   }
 
   conform(component, request)
   {
-    const value = this.getParameterValue(component, request)
-    return request.param[component.name] = value ?? request.param[component.name]
+    try
+    {
+      const value = this.getParameterValue(component, request)
+      return request.param[component.name] = value ?? request.param[component.name]
+    }
+    catch(reason)
+    {
+      const error = new Error(`Invalid parameter "${component.name}" (${component.in})`)
+      error.code  = 'E_OAS_INVALID_PARAMETER'
+      error.cause = reason
+      throw error
+    }
   }
 
   getParameterValue(parameter, request)
@@ -109,7 +118,7 @@ export default class Parameters extends ComponentsAbstraction
     {
       const error = new Error(`Invalid component type ${componentType}`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new Error('The component type must be an [object Array]')
+      error.cause = 'The component type must be an [object Array]'
       throw error
     }
 
@@ -127,7 +136,7 @@ export default class Parameters extends ComponentsAbstraction
     {
       const error = new Error(`Invalid parameter type ${parameterType}`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new Error('The parameter type must be an [object Object]')
+      error.cause = 'The parameter type must be an [object Object]'
       throw error
     }
 

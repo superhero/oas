@@ -43,7 +43,7 @@ export default class ComponentsAbstraction
     {
       const error = new TypeError(`Invalid ref type ${Object.prototype.toString.call(ref)}`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new TypeError('The ref type must be a string')
+      error.cause = 'The ref type must be a string'
       throw error
     }
   }
@@ -69,7 +69,7 @@ export default class ComponentsAbstraction
     }
     catch(reason)
     {
-      const error = new TypeError(`Invalid ref pointer path`)
+      const error = new TypeError(`Invalid ref pointer path "${path}"`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
       error.cause = reason
       throw error
@@ -86,9 +86,9 @@ export default class ComponentsAbstraction
   {
     if(true === !!uri)
     {
-      const error = new TypeError(`Invalid ref uri`)
+      const error = new TypeError(`Invalid ref uri "${uri}"`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new TypeError('Only local references are supported')
+      error.cause = 'Only local references are supported'
       throw error
     }
   }
@@ -99,7 +99,7 @@ export default class ComponentsAbstraction
     {
       const error = new TypeError(`The ref pointer is missing`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new TypeError('The ref must include a # symbol')
+      error.cause = 'The ref must include a # symbol'
       throw error
     }
   }
@@ -110,7 +110,7 @@ export default class ComponentsAbstraction
     {
       const error = new TypeError(`Invalid ref pointer`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new TypeError('The ref pointer must be an absolute path')
+      error.cause = 'The ref pointer must be an absolute path'
       throw error
     }
   }
@@ -123,7 +123,7 @@ export default class ComponentsAbstraction
     {
       const error = new Error(`Invalid component type ${componentType}`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new Error('The component type must be an [object Object]')
+      error.cause = 'The component type must be an [object Object]'
       throw error
     }
 
@@ -137,7 +137,7 @@ export default class ComponentsAbstraction
     {
       if(Object.keys(component).length > 1)
       {
-        const error = new Error('The component must only have the "$ref" attribute when present')
+        const error = new Error('The component must only have the "$ref" attribute when defined')
         error.code  = 'E_OAS_INVALID_SPECIFICATION'
         throw error
       }
@@ -150,8 +150,9 @@ export default class ComponentsAbstraction
     {
       if(false === this.validComponentAttributes.includes(attribute))
       {
-        const error = new Error(`Invalid component attribute ${attribute}`)
+        const error = new Error(`Invalid component attribute "${attribute}"`)
         error.code  = 'E_OAS_INVALID_SPECIFICATION'
+        error.cause = `Valid attributes: ${this.listFormat.format(this.validComponentAttributes)}`
         throw error
       }
     }

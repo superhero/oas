@@ -19,39 +19,51 @@ export default class Headers extends ComponentsAbstraction
 
   conform(component, instance)
   {
-    if(component.$ref)
+    try
     {
-      return this.conformRef(component.$ref, instance)
-    }
-    
-    if(component.required
-    && undefined === instance)
-    {
-      const error = new Error(`Missing required header`)
-      error.code  = 'E_OAS_INVALID_INSTANCE'
-      throw error
-    }
+      this.validateComponentAttributes(component)
 
-    if(undefined === instance)
-    {
+      if(component.$ref)
+      {
+        return this.conformRef(component.$ref, instance)
+      }
+      
+      if(component.required
+      && undefined === instance)
+      {
+        const error = new Error(`Missing required header`)
+        error.code  = 'E_OAS_INVALID_INSTANCE'
+        throw error
+      }
+
+      if(undefined === instance)
+      {
+        return instance
+      }
+
+      if(false === !!component.allowEmptyValue
+      && ''    === instance)
+      {
+        const error = new Error(`Header is not allowed to be empty`)
+        error.code  = 'E_OAS_INVALID_INSTANCE'
+        throw error
+      }
+
+      if('schema' in component)
+      {
+        const schema = component.schema
+        return this.schemas.conform(schema, instance)
+      }
+
       return instance
     }
-
-    if(false === !!component.allowEmptyValue
-    && ''    === instance)
+    catch(reason)
     {
-      const error = new Error(`Header is not allowed to be empty`)
-      error.code  = 'E_OAS_INVALID_INSTANCE'
+      const error = new Error(`Invalid header component`)
+      error.code  = 'E_OAS_INVALID_HEADER'
+      error.cause = reason
       throw error
     }
-
-    if('schema' in component)
-    {
-      const schema = component.schema
-      return this.schemas.conform(schema, instance)
-    }
-
-    return instance
   }
 
   validateRefPointer(pointer)
@@ -70,12 +82,17 @@ export default class Headers extends ComponentsAbstraction
   {
     for(const header in component)
     {
-      this.validateHeaderComponent(component[header])
+      try
+      {
+        super.validateComponentAttributes(component[header])
+      }
+      catch(reason)
+      {
+        const error = new Error(`Invalid header "${header}" in component`)
+        error.code  = 'E_OAS_INVALID_SPECIFICATION'
+        error.cause = reason
+        throw error
+      }
     }
-  }
-
-  validateHeaderComponent(component)
-  {
-    super.validateComponentAttributes(component)
   }
 }

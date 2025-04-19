@@ -36,25 +36,35 @@ export default class OAS
     this.requestBodies.specification  = specification
     this.responses.specification      = specification
 
-    this.validatePaths(specification?.paths)
+    this.validatePathsType(specification?.paths)
 
     for(const path in specification.paths)
     {
-      const route = this.createRoute(specification.paths[path])
-      route.criteria = path.replace(/\{([^}]+)\}/g, ':$1'),
-      router.set('oas/paths/~' + path, route)
+      try
+      {
+        const route = this.createRoute(specification.paths[path])
+        route.criteria = path.replace(/\{([^}]+)\}/g, ':$1'),
+        router.set('oas/paths/~' + path, route)
+      }
+      catch(reason)
+      {
+        const error = new Error(`Invalid specification for path "${path}"`)
+        error.code  = 'E_OAS_INVALID_SPECIFICATION'
+        error.cause = reason
+        throw error
+      }
     }
   }
 
-  validatePaths(paths)
+  validatePathsType(paths)
   {
     const pathsType = Object.prototype.toString.call(paths)
 
     if('[object Object]' !== pathsType)
     {
-      const error = new Error('The paths property in the specification must be an object')
-      error.code = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = new Error(`The paths property in the specification is of invalid type ${pathsType}`)
+      const error = new Error('The paths property in the specification must be of type [object Object]')
+      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.cause = `The paths property in the specification is of invalid type ${pathsType}`
       throw error
     }
   }
@@ -69,17 +79,28 @@ export default class OAS
     for(let method in pathObject)
     {
       const operation = pathObject[method]
-      this.validateOperation(operation)
-      method = method.toLowerCase()
-      route['method.' + method] = this.transformOperationIdToDispatcherName(operation.operationId)
-      oas[method.toUpperCase()] = operation
+
+      try
+      {
+        this.validateOperation(operation)
+        method = method.toLowerCase()
+        route['method.' + method] = this.transformOperationIdToDispatcherName(operation.operationId)
+        oas[method.toUpperCase()] = operation
+      }
+      catch(reason)
+      {
+        const error = new Error(`Invalid operation "${operation.operationId}" in "${method}"`)
+        error.code  = 'E_OAS_INVALID_OPERATION'
+        error.cause = reason
+        throw error
+      }
     }
 
     Object.defineProperty(route, 'oas', { value: oas })
 
     const
       contentTypeDispatcherPrefix = '@superhero/http-server/dispatcher/upstream/header/content-type/',
-      contentType = 'application/json'
+      contentType                 = 'application/json'
 
     route['content-type.' + contentType] = contentTypeDispatcherPrefix + contentType
 
@@ -98,8 +119,8 @@ export default class OAS
   {
     if(false === 'operationId' in operation)
     {
-      const error = new TypeError(`The operation does not define an operationId`)
-      error.code  = 'E_OAS_UNSUPORTED_SPECIFICATION'
+      const error = new TypeError(`The operation must define an operationId`)
+      error.code  = 'E_OAS_MISSING_OPERATION_ID'
       error.cause = `The operationId is expected to define a valid dispatcher for the operation`
       throw error
     }
@@ -119,8 +140,8 @@ export default class OAS
     }
     catch(reason)
     {
-      const error = new Error(`The operationId "${operation.operationId}" does not point to an availible dispatcher`)
-      error.code  = 'E_OAS_DISPATCHER_NOT_AVAILIBLE'
+      const error = new Error(`Invalid dispatcher for operation "${operation.operationId}"`)
+      error.code  = 'E_OAS_INVALID_DISPATCHER'
       error.cause = reason
       throw error
     }

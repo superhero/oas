@@ -32,7 +32,7 @@ export default class ResponsesMiddleware
       else
       {
         const error = new Error(`Invalid status code: ${status}`)
-        error.code  = 'E_OAS_INVALID_SPECIFICATION'
+        error.code  = 'E_OAS_INVALID_RESPONSE_STATUS'
         error.cause = `The operation supports status codes: ${Object.keys(responses).join(', ')}`
         throw error
       }
@@ -41,9 +41,10 @@ export default class ResponsesMiddleware
 
   onError(reason, request, session)
   {
-    const error = new Error(`Unable to conform the response for operation ${session.route.oas[request.method].operationId}`)
+    const error = new Error(`Invalid response for operation ${session.route.oas[request.method].operationId}`)
     error.code  = 'E_OAS_INVALID_RESPONSE'
     error.cause = reason
-    throw error
+    error.status = 400
+    session.abortion.abort(error)
   }
 }

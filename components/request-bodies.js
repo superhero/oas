@@ -13,7 +13,6 @@ export default class RequestBodies extends ComponentsAbstraction
   constructor(schemas)
   {
     super()
-    
     this.schemas = schemas
   }
 
@@ -28,37 +27,47 @@ export default class RequestBodies extends ComponentsAbstraction
    */
   conform(component, request)
   {
-    if(component.$ref)
+    try
     {
-      return this.conformRef(component.$ref, request)
-    }
-
-    const requestContentType = request.headers['content-type']?.split(';')[0].split('*')[0] || ''
-
-    for(const contentType in component.content)
-    {
-      // supports a wildcard content type, if precent, else as normal
-      const supportedContentType = contentType.split('*')[0]
-
-      if(supportedContentType.startsWith(requestContentType)
-      || requestContentType.startsWith(supportedContentType))
+      if(component.$ref)
       {
-        if('schema' in component.content[contentType])
+        return this.conformRef(component.$ref, request)
+      }
+
+      const requestContentType = request.headers['content-type']?.split(';')[0].split('*')[0] || ''
+  
+      for(const contentType in component.content)
+      {
+        // supports a wildcard content type, if precent, else as normal
+        const supportedContentType = contentType.split('*')[0]
+  
+        if(supportedContentType.startsWith(requestContentType)
+        || requestContentType.startsWith(supportedContentType))
         {
-          return request.body = this.schemas.conform(component.content[contentType].schema, request.body, true)
-        }
-        else
-        {
-          const error = new Error(`Missing the required schema attribute in the requestBody content attribute: "${contentType}"`)
-          error.code  = 'E_OAS_INVALID_SPECIFICATION'
-          throw error
+          if('schema' in component.content[contentType])
+          {
+            return request.body = this.schemas.conform(component.content[contentType].schema, request.body, true)
+          }
+          else
+          {
+            const error = new Error(`Missing the required schema attribute in the request body: "${contentType}"`)
+            error.code  = 'E_OAS_INVALID_SPECIFICATION'
+            throw error
+          }
         }
       }
-    }
 
-    const error = new Error(`The requestBody does not support the provided content-type "${request.headers['content-type']}"`)
-    error.code  = 'E_OAS_UNSUPORTED_CONTENT_TYPE'
-    throw error
+      const error = new Error(`The provided content-type "${request.headers['content-type']}" is not supported`)
+      error.code  = 'E_OAS_UNSUPORTED_CONTENT_TYPE'
+      throw error
+    }
+    catch(reason)
+    {
+      const error = new Error(`Invalid request body`)
+      error.code  = 'E_OAS_INVALID_REQUEST_BODY'
+      error.cause = reason
+      throw error
+    }
   }
 
   validateRefPointer(pointer)

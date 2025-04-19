@@ -22,17 +22,10 @@ export default class RequestBodiesMiddleware
 
   onError(reason, request, session)
   {
-    if('E_OAS_INVALID_INSTANCE' === reason.code)
-    {
-      reason.status = 400
-      return session.abortion.abort(reason)
-    }
-    else
-    {
-      const error  = new Error(`Unable to conform the request-body for operation ${session.route.oas[request.method].operationId}`)
-      error.code   = 'E_OAS_FAILED_TO_CONFORM_REQUEST_BODY'
-      error.cause  = reason
-      throw error
-    }
+    const error  = new Error(`Invalid request-body for operation ${session.route.oas[request.method].operationId}`)
+    error.code   = 'E_OAS_INVALID_REQUEST_BODY'
+    error.cause  = reason
+    error.status = 400
+    session.abortion.abort(error)
   }
 }
