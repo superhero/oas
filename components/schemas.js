@@ -968,7 +968,7 @@ export default class Schemas extends ComponentsAbstraction
       {
         const error = new Error(`Missing required properties`)
         error.code  = 'E_OAS_SCHEMA_OBJECT_MISSING_REQUIRED_PROPERTIES'
-        error.cause = `The object must have ${missing.length === 1 ? 'property' : 'properties'} ${listFormat.format(missing)}`
+        error.cause = `The object must have ${missing.length === 1 ? 'property' : 'properties'} ${this.listFormat.format(missing)}`
         throw error
       }
     }
