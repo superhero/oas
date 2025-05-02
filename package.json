@@ -16,7 +16,7 @@
     "./middleware/*": "./middleware/*.js"
   },
   "dependencies": {
-    "@superhero/deep": "^4.3.0",
+    "@superhero/deep": "^4.4.0",
     "@superhero/http-server": "^4.4.2"
   },
   "devDependencies": {
