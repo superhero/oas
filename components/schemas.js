@@ -153,7 +153,7 @@ export default class Schemas extends ComponentsAbstraction
     {
       if(undefined === instance)
       {
-        instance = component.default
+        instance = deepclone(component.default)
       }
     }
 
