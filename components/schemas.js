@@ -22,9 +22,9 @@ export default class Schemas extends ComponentsAbstraction
   validateNumberFormat = new Map
   validateStringFormat = new Map
 
-  constructor()
+  constructor(specification)
   {
-    super()
+    super(specification)
 
     this.validateNumberFormat.set('float',      this.validateNumberFormatFloat)
     this.validateNumberFormat.set('double',     this.validateNumberFormatDouble)

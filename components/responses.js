@@ -10,10 +10,9 @@ export default class Responses extends ComponentsAbstraction
     '$ref', 'description', 'headers', 'content', 'links'
   ]
 
-  constructor(schemas, headers)
+  constructor(specification, schemas, headers)
   {
-    super()
-
+    super(specification)
     this.schemas = schemas
     this.headers = headers
   }

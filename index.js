@@ -3,39 +3,66 @@ import Parameters     from '@superhero/oas/components/parameters'
 import RequestBodies  from '@superhero/oas/components/request-bodies'
 import Responses      from '@superhero/oas/components/responses'
 import Schemas        from '@superhero/oas/components/schemas'
+import path           from 'node:path'
+import fs             from 'node:fs/promises'
 
-export function locate(locator)
+export async function locate(locator)
 {
-  const router = locator('@superhero/http-server').router
-  return new OAS(router)
+  const
+    server        = locator('@superhero/http-server'),
+    specification = findSpecification(locator.config)
+
+  return new OAS(server, specification)
+}
+
+/**
+ * Find the OpenAPI Specification in the configuration, and locates it from disk 
+ * if a string path is configured.
+ * 
+ * @param {'@superhero/config'} config
+ * @returns {Promise<Object>} The OpenAPI Specification object.
+ */
+export async function findSpecification(config)
+{
+  let specification = config.find('oas')
+
+  if('string' === typeof specification)
+  {
+    if(false === path.isAbsolute(specification))
+    {
+      const absolute = config.findAbsoluteDirPathByConfigEntry('oas', specification)
+      specification  = path.join(absolute, specification)
+    }
+
+    specification = await fs.readFile(specification, 'utf8')
+    specification = JSON.parse(specification)
+  }
+
+  return specification
 }
 
 export default class OAS
 {
-  constructor(router)
+  constructor(server, specification)
   {
-    this.router = router
+    this.server         = server
+    this.router         = server.router
+    this.specification  = specification
 
-    this.schemas        = new Schemas()
-    this.headers        = new Headers(this.schemas)
-    this.parameters     = new Parameters(this.schemas)
-    this.requestBodies  = new RequestBodies(this.schemas)
-    this.responses      = new Responses(this.schemas, this.headers)
+    this.schemas        = new Schemas(specification)
+    this.headers        = new Headers(specification, this.schemas)
+    this.parameters     = new Parameters(specification, this.schemas)
+    this.requestBodies  = new RequestBodies(specification, this.schemas)
+    this.responses      = new Responses(specification, this.schemas, this.headers)
   }
 
-  bootstrap(specification)
+  bootstrap()
   {
-    this.setSpecification(this.router, specification)
+    this.setSpecification(this.router, this.specification)
   }
 
   setSpecification(router, specification)
   {
-    this.schemas.specification        = specification
-    this.headers.specification        = specification
-    this.parameters.specification     = specification
-    this.requestBodies.specification  = specification
-    this.responses.specification      = specification
-
     this.validatePathsType(specification?.paths)
 
     for(const path in specification.paths)

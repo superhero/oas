@@ -11,9 +11,9 @@ export default class Headers extends ComponentsAbstraction
     'example', 'examples', '$ref'
   ]
 
-  constructor(schemas)
+  constructor(specification, schemas)
   {
-    super()
+    super(specification)
     this.schemas = schemas
   }
 

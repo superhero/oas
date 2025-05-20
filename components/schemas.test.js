@@ -1,10 +1,11 @@
 import Schemas          from '@superhero/oas/components/schemas'
 import assert           from 'node:assert'
 import { suite, test }  from 'node:test'
+import config           from '../config.json' with { type: 'json' }
 
 suite('@superhero/oas/schemas', () => 
 {
-  const schemas = new Schemas()
+  const schemas = new Schemas(config.oas)
 
   suite('Supported attributes', () =>
   {

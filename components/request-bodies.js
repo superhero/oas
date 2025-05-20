@@ -10,9 +10,9 @@ export default class RequestBodies extends ComponentsAbstraction
     'description', 'required', 'content', '$ref'
   ]
 
-  constructor(schemas)
+  constructor(specification, schemas)
   {
-    super()
+    super(specification)
     this.schemas = schemas
   }
 

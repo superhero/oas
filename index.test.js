@@ -46,8 +46,6 @@ suite('@superhero/oas', () =>
       '@superhero/oas/middleware/responses'      : path.resolve('./middleware/responses.js')
     })
 
-    oas = locate('@superhero/oas')
-
     locate.set('placeholder', { dispatch: () => 'placeholder' })
   })
 
@@ -62,8 +60,9 @@ suite('@superhero/oas', () =>
           '/bar':
           { put:  { operationId: 'placeholder#3', responses: { 200: {} }} }}}
 
-    config.assign(specification)
-    oas.bootstrap(specification)
+    config.assign({ oas:specification })
+    oas = locate('@superhero/oas')
+    oas.bootstrap()
 
     assert.ok(oas.router.has('oas/paths/~/foo'), 'Route for /foo should be added')
     assert.ok(oas.router.has('oas/paths/~/bar'), 'Route for /bar should be added')
@@ -79,8 +78,9 @@ suite('@superhero/oas', () =>
               requestBody : { content: { 'application/json': {} } },
               responses   : { 200: {} } }}}}
 
-    config.assign(specification)
-    oas.bootstrap(specification)
+    config.assign({ oas:specification })
+    oas = locate('@superhero/oas')
+    oas.bootstrap()
 
     const
       route             = oas.router.get('oas/paths/~/foo'),
@@ -102,8 +102,9 @@ suite('@superhero/oas', () =>
               parameters  : [],
               responses   : { 200: {} } }}}}
 
-    config.assign(specification)
-    oas.bootstrap(specification)
+    config.assign({ oas:specification })
+    oas = locate('@superhero/oas')
+    oas.bootstrap()
 
     const
       route         = oas.router.get('oas/paths/~/foo'),
@@ -200,8 +201,9 @@ suite('@superhero/oas', () =>
     locate.set('test/dispatcher/1', { dispatch: (request, session) => session.view.body.result = request.param.foo })
     locate.set('test/dispatcher/2', { dispatch: (request, session) => session.view.body.result = request.body.foo })
 
-    config.assign(specification)
-    oas.bootstrap(specification)
+    config.assign({ oas:specification })
+    oas = locate('@superhero/oas')
+    oas.bootstrap()
 
     const route = oas.router.get('oas/paths/~/example')
 
@@ -294,8 +296,11 @@ suite('@superhero/oas', () =>
 
   test('Throws error for invalid paths type in specification', () => 
   {
+    config.assign({ paths: 'invalid' })
+    oas = locate('@superhero/oas')
+
     assert.throws(
-      () => oas.bootstrap({ paths: 'invalid' }),
+      () => oas.bootstrap(),
       { code: 'E_OAS_INVALID_SPECIFICATION' },
       'Should throw due to invalid paths type')
   })
@@ -305,9 +310,11 @@ suite('@superhero/oas', () =>
     const invalidSpecification = 
       { paths: { '/foo': { get: { operationId : 'placeholder' }}}}
 
-    config.assign(invalidSpecification)
+    config.assign({ oas:invalidSpecification })
+    oas = locate('@superhero/oas')
+
     assert.throws(
-      () => oas.bootstrap(invalidSpecification),
+      () => oas.bootstrap(),
       { code: 'E_OAS_INVALID_SPECIFICATION' },
       'Should throw due to missing status code attribute')
   })
@@ -317,8 +324,11 @@ suite('@superhero/oas', () =>
     const invalidSpecification = 
       { paths: { '/foo': { get: { responses: { 200: {} } }}}}
 
+    config.assign({ oas:invalidSpecification })
+    oas = locate('@superhero/oas')
+
     assert.throws(
-      () => oas.bootstrap(invalidSpecification),
+      () => oas.bootstrap(),
       { code: 'E_OAS_UNSUPORTED_SPECIFICATION' },
       'Should throw due to missing operationId')
   })
@@ -328,8 +338,11 @@ suite('@superhero/oas', () =>
     const invalidSpecification = 
       { paths: { '/foo': { get: { operationId: 'placeholder' }}}}
 
+    config.assign({ oas:invalidSpecification })
+    oas = locate('@superhero/oas')
+
     assert.throws(
-      () => oas.bootstrap(invalidSpecification),
+      () => oas.bootstrap(),
       { code: 'E_OAS_INVALID_SPECIFICATION' },
       'Should throw due to missing responses')
   })
@@ -343,9 +356,11 @@ suite('@superhero/oas', () =>
             { operationId : 'placeholder', 
               responses   : {} }}}}
 
-    config.assign(invalidSpecification)
+    config.assign({ oas:invalidSpecification })
+    oas = locate('@superhero/oas')
+
     assert.throws(
-      () => oas.bootstrap(invalidSpecification),
+      () => oas.bootstrap(),
       { code: 'E_OAS_INVALID_SPECIFICATION' },
       'Should throw due to missing status code attribute')
   })
@@ -360,8 +375,11 @@ suite('@superhero/oas', () =>
               requestBody : { content: { 'unsupported/type': {} } },
               responses   : { 200: {} } }}}}
 
+    config.assign({ oas:invalidSpecification })
+    oas = locate('@superhero/oas')
+          
     assert.throws(
-      () => oas.bootstrap(invalidSpecification),
+      () => oas.bootstrap(),
       { code: 'E_OAS_UNSUPORTED_SPECIFICATION' },
       'Should throw due to unsupported content type')
   })
@@ -376,8 +394,11 @@ suite('@superhero/oas', () =>
               parameters  : 'invalid',
               responses   : { 200: {} }}}}}
 
+    config.assign({ oas:invalidSpecification })
+    oas = locate('@superhero/oas')
+
     assert.throws(
-      () => oas.bootstrap(invalidSpecification),
+      () => oas.bootstrap(),
       { code: 'E_OAS_INVALID_SPECIFICATION' },
       'Should throw due to invalid parameters type')
   })

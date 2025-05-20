@@ -1,5 +1,4 @@
 import assert from 'node:assert'
-import config from '../config.json' with { type: 'json' }
 
 /**
  * An abstract class that provides common functionality for
@@ -10,17 +9,16 @@ import config from '../config.json' with { type: 'json' }
  */
 export default class ComponentsAbstraction
 {
+  constructor(specification)
+  {
+    this.specification = specification
+  }
+
   listFormat = new Intl.ListFormat('en', { style:'long', type:'disjunction' })
 
   deepEqual = assert.deepEqual
 
   validComponentAttributes = []
-
-  /**
-   * Expected to be overridden with a specific 
-   * implementation, through the bootstrap process.
-   */
-  specification = config.oas
 
   conformRef(ref, instance, ...args)
   {

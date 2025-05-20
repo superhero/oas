@@ -12,9 +12,9 @@ export default class Parameters extends ComponentsAbstraction
     'example', 'allowReserved', 'nullable', 'default', '$ref'
   ]
 
-  constructor(schemas)
+  constructor(specification, schemas)
   {
-    super()
+    super(specification)
     this.schemas = schemas
   }
 
