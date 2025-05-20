@@ -9,9 +9,25 @@
   },
   "locator":
   {
-    "@superhero/oas": true,
-    "@superhero/oas/components/*": "./components/*.js",
-    "@superhero/oas/middleware/*": "./middleware/*.js"
+    "@superhero/oas": 
+    {
+      "uses": [ "@superhero/http-server" ]
+    },
+    "@superhero/http-server/middleware/parameters":
+    {
+      "path": "./middleware/parameters.js",
+      "uses": [ "@superhero/oas" ]
+    },
+    "@superhero/http-server/middleware/request-bodies":
+    {
+      "path": "./middleware/request-bodies.js",
+      "uses": [ "@superhero/oas" ]
+    },
+    "@superhero/http-server/middleware/responses":
+    {
+      "path": "./middleware/responses.js",
+      "uses": [ "@superhero/oas" ]
+    }
   },
   "oas":
   {
