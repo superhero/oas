@@ -1,6 +1,6 @@
 {
   "name": "@superhero/oas",
-  "version": "4.6.1",
+  "version": "4.6.2",
   "description": "OpenAPI Specification (OAS) router",
   "keywords": [
     "OAS",
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@superhero/deep": "^4.5.0",
-    "@superhero/http-server": "^4.4.5"
+    "@superhero/http-server": "^4.4.4"
   },
   "devDependencies": {
     "@superhero/http-request": "^4.0.10",
