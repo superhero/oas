@@ -10,7 +10,7 @@ export async function locate(locator)
 {
   const
     server        = locator('@superhero/http-server'),
-    specification = findSpecification(locator.config)
+    specification = await findSpecification(locator.config)
 
   return new OAS(server, specification)
 }
