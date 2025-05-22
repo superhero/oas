@@ -13,17 +13,17 @@
     {
       "uses": [ "@superhero/http-server" ]
     },
-    "@superhero/http-server/middleware/parameters":
+    "@superhero/oas/middleware/parameters":
     {
       "path": "./middleware/parameters.js",
       "uses": [ "@superhero/oas" ]
     },
-    "@superhero/http-server/middleware/request-bodies":
+    "@superhero/oas/middleware/request-bodies":
     {
       "path": "./middleware/request-bodies.js",
       "uses": [ "@superhero/oas" ]
     },
-    "@superhero/http-server/middleware/responses":
+    "@superhero/oas/middleware/responses":
     {
       "path": "./middleware/responses.js",
       "uses": [ "@superhero/oas" ]
