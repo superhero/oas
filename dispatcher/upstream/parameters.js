@@ -4,9 +4,6 @@ export function locate(locator)
   return new ParametersMiddleware(oas)
 }
 
-/**
- * @memberof Oas.Middleware
- */
 export default class ParametersMiddleware
 {
   constructor(oas)

@@ -4,9 +4,6 @@ export function locate(locator)
   return new ResponsesMiddleware(oas)
 }
 
-/**
- * @memberof Oas.Middleware
- */
 export default class ResponsesMiddleware
 {
   constructor(oas)

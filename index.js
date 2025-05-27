@@ -133,10 +133,10 @@ export default class OAS
 
     route.middleware =
     [
-      '@superhero/oas/middleware/parameters',
+      '@superhero/oas/dispatcher/upstream/parameters',
       '@superhero/http-server/dispatcher/upstream/header/content-type',
-      '@superhero/oas/middleware/request-bodies',
-      '@superhero/oas/middleware/responses'
+      '@superhero/oas/dispatcher/upstream/request-bodies',
+      '@superhero/oas/dispatcher/downstream/responses'
     ]
 
     return route
@@ -172,9 +172,6 @@ export default class OAS
       error.cause = reason
       throw error
     }
-
-    operation.headers
-    && this.headers.validateComponent(operation.headers)
 
     operation.parameters
     && this.parameters.validateComponent(operation.parameters)

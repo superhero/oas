@@ -4,9 +4,6 @@ export function locate(locator)
   return new RequestBodiesMiddleware(oas)
 }
 
-/**
- * @memberof Oas.Middleware
- */
 export default class RequestBodiesMiddleware
 {
   constructor(oas)

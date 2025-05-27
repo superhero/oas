@@ -13,19 +13,19 @@
     {
       "uses": [ "@superhero/http-server" ]
     },
-    "@superhero/oas/middleware/parameters":
+    "@superhero/oas/dispatcher/upstream/parameters":
     {
-      "path": "./middleware/parameters.js",
+      "path": "./dispatcher/upstream/parameters.js",
       "uses": [ "@superhero/oas" ]
     },
-    "@superhero/oas/middleware/request-bodies":
+    "@superhero/oas/dispatcher/upstream/request-bodies":
     {
-      "path": "./middleware/request-bodies.js",
+      "path": "./dispatcher/upstream/request-bodies.js",
       "uses": [ "@superhero/oas" ]
     },
-    "@superhero/oas/middleware/responses":
+    "@superhero/oas/dispatcher/downstream/responses":
     {
-      "path": "./middleware/responses.js",
+      "path": "./dispatcher/downstream/responses.js",
       "uses": [ "@superhero/oas" ]
     }
   },

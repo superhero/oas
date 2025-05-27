@@ -39,11 +39,11 @@ suite('@superhero/oas', () =>
 
     await locate.eagerload(
     {
-      '@superhero/oas'                           : path.resolve('./index.js'),
+      '@superhero/oas'                                    : path.resolve('./index.js'),
       // middleware
-      '@superhero/oas/middleware/parameters'     : path.resolve('./middleware/parameters.js'),
-      '@superhero/oas/middleware/request-bodies' : path.resolve('./middleware/request-bodies.js'),
-      '@superhero/oas/middleware/responses'      : path.resolve('./middleware/responses.js')
+      '@superhero/oas/dispatcher/upstream/parameters'     : path.resolve('./dispatcher/upstream/parameters.js'),
+      '@superhero/oas/dispatcher/upstream/request-bodies' : path.resolve('./dispatcher/upstream/request-bodies.js'),
+      '@superhero/oas/dispatcher/downstream/responses'    : path.resolve('./dispatcher/downstream/responses.js')
     })
 
     locate.set('placeholder', { dispatch: () => 'placeholder' })
@@ -84,7 +84,7 @@ suite('@superhero/oas', () =>
 
     const
       route             = oas.router.get('oas/paths/~/foo'),
-      hasRequestBodies  = route.route.middleware.includes('@superhero/oas/middleware/request-bodies')
+      hasRequestBodies  = route.route.middleware.includes('@superhero/oas/dispatcher/upstream/request-bodies')
 
     assert.ok(hasRequestBodies, 'Middleware for requestBody should be added')
     assert.equal(
@@ -108,7 +108,7 @@ suite('@superhero/oas', () =>
 
     const
       route         = oas.router.get('oas/paths/~/foo'),
-      hasParameters = route.route.middleware.includes('@superhero/oas/middleware/parameters')
+      hasParameters = route.route.middleware.includes('@superhero/oas/dispatcher/upstream/parameters')
 
     assert.ok(hasParameters, 'Middleware for parameters should be added')
   })
@@ -208,9 +208,9 @@ suite('@superhero/oas', () =>
     const route = oas.router.get('oas/paths/~/example')
 
     assert.ok(route, 'route for /example should exist')
-    assert.ok(route.route.middleware.includes('@superhero/oas/middleware/parameters'))
-    assert.ok(route.route.middleware.includes('@superhero/oas/middleware/responses'))
-    assert.ok(route.route.middleware.includes('@superhero/oas/middleware/request-bodies'))
+    assert.ok(route.route.middleware.includes('@superhero/oas/dispatcher/upstream/parameters'))
+    assert.ok(route.route.middleware.includes('@superhero/oas/dispatcher/upstream/request-bodies'))
+    assert.ok(route.route.middleware.includes('@superhero/oas/dispatcher/downstream/responses'))
     assert.ok(route.route.middleware.includes('@superhero/http-server/dispatcher/upstream/header/content-type'))
 
     assert.equal(route.route['content-type.application/json'], '@superhero/http-server/dispatcher/upstream/header/content-type/application/json')
