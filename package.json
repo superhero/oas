@@ -1,6 +1,6 @@
 {
   "name": "@superhero/oas",
-  "version": "4.6.7",
+  "version": "4.6.8",
   "description": "OpenAPI Specification (OAS) router",
   "keywords": [
     "OAS",
@@ -11,7 +11,11 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./index.js"
+    ".": "./index.js",
+    "./components/*" : "./components/*.js",
+    "./dispatcher/*" : "./dispatcher/*.js",
+    "./dispatcher/downstream/*" : "./dispatcher/downstream/*.js",
+    "./dispatcher/upstream/*" : "./dispatcher/upstream/*.js"
   },
   "dependencies": {
     "@superhero/deep": "^4.5.0",
