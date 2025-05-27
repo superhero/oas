@@ -11,8 +11,9 @@ export default class OptionsDispatcher
     this.specification = specification
   }
 
-  dispatch(request)
+  dispatch(request, session)
   {
+    const [, validResource, ...validOperations ] = session.route.oas[request.method].operationId.split('#')
     const
       output        = {},
       components    = {},
@@ -24,21 +25,67 @@ export default class OptionsDispatcher
       depth         = request.url.pathname.split('/').length
 
     // Loop through all paths in the OpenAPI Specification and find the ones that 
-    // match the request path, or the beginning of it...
+    // match the defined operation, or the beginning of the request path if no operation is defined...
     for(const path in this.specification.paths || {})
     {
-      const
-        partial = path.split('/').slice(0, depth).join('/'),
-        regexp  = partial.replace(/{[^}]+}/g, '([^/]*)')
+      let valid = false
 
-      // Check if the request path matches the beginning of the specification path
-      if(new RegExp(`^${regexp}$`).test(request.url.pathname))
+      // validate the path depending on if the operation-id specify a specific operation, or not...
+      if(validResource)
       {
-        paths[path] = this.specification.paths[path]
+        valid = validResource === path
+      }
+      // validate the beginning of the request path if no specific operation is defined...
+      else
+      {
+        const
+          partial = path.split('/').slice(0, depth).join('/'),
+          regexp  = partial.replace(/{[^}]+}/g, '([^/]*)')
+
+        valid = new RegExp(`^${regexp}$`).test(request.url.pathname)
+      }
+
+      // Only include a scoped version of the specification
+      if(valid)
+      {
+        paths[path] = { ...this.specification.paths[path] }
 
         // Operations
         for(let method in paths[path])
         {
+          const METHOD = method.toUpperCase()
+
+          switch(METHOD)
+          {
+            case 'GET':
+            case 'PUT':
+            case 'POST':
+            case 'DELETE':
+            case 'OPTIONS':
+            case 'HEAD':
+            case 'PATCH':
+            case 'TRACE':
+            {
+              if(validOperations.langth === 0 // if not specified, then not concidered restrictive...
+              || validOperations.map(validMethod => validMethod.toUpperCase()).includes(METHOD))
+              {
+                // break to proceed to process
+                break
+              }
+              else
+              {
+                // hide restricted methods
+                delete paths[path][method]
+                continue
+              }
+            }
+            default:
+            {
+              // ignore any non HTTP method
+              continue
+            }
+          }
+
           const operation = paths[path][method]
 
           // Parameters
