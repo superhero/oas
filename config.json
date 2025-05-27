@@ -13,6 +13,11 @@
     {
       "uses": [ "@superhero/http-server" ]
     },
+    "@superhero/oas/dispatcher/options":
+    {
+      "path": "./dispatcher/options.js",
+      "uses": [ "@superhero/oas" ]
+    },
     "@superhero/oas/dispatcher/upstream/parameters":
     {
       "path": "./dispatcher/upstream/parameters.js",
