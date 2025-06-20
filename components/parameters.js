@@ -1,4 +1,5 @@
 import ComponentsAbstraction from './abstraction.js'
+import Schemas               from './schemas.js'
 
 /**
  * @memberof Oas.Components
@@ -8,14 +9,14 @@ export default class Parameters extends ComponentsAbstraction
   validParameterAttributes =
   [
     'name', 'in', 'required', 'description', 'deprecated', 
-    'allowEmptyValue', 'schema', 'style', 'explode', 'examples', 
-    'example', 'allowReserved', 'nullable', 'default', '$ref'
+    'schema', 'style', 'explode', 'examples', 'example', 
+    'allowReserved', 'nullable', 'default', '$ref'
   ]
 
-  constructor(specification, schemas)
+  constructor(specification)
   {
     super(specification)
-    this.schemas = schemas
+    this.schemas = new Schemas(specification)
   }
 
   conform(component, request)
@@ -23,7 +24,7 @@ export default class Parameters extends ComponentsAbstraction
     try
     {
       const value = this.getParameterValue(component, request)
-      return request.param[component.name] = value ?? request.param[component.name]
+      return request.param[component.name] = value === undefined ? request.param[component.name] : value
     }
     catch(reason)
     {
@@ -45,19 +46,15 @@ export default class Parameters extends ComponentsAbstraction
 
     if('schema' in parameter)
     {
-      instance = this.schemas.conform(parameter.schema, instance, true)
-    }
-
-    if('default' in parameter
-    && undefined === instance)
-    {
-      instance = parameter.default
+      const schema = { ...parameter.schema }
+      schema.nullable = schema.nullable || parameter.nullable
+      instance = this.schemas.conform(schema, instance, true)
     }
 
     if(parameter.nullable
-    && null === instance)
+    && 'null' === String(instance).toLocaleLowerCase())
     {
-      return instance
+      return null
     }
 
     if(undefined === instance
@@ -65,15 +62,6 @@ export default class Parameters extends ComponentsAbstraction
     {
       const error = new Error(`The parameter "${parameter.name}" is required`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
-      throw error
-    }
-
-    if(false === !!parameter.allowEmptyValue
-    && ''    === instance)
-    {
-      const error = new Error(`The parameter ${parameter.name} is not allowed to be empty`)
-      error.code  = 'E_OAS_INVALID_INSTANCE'
-      error.cause = 'The parameter allowEmptyValue attribute is false and the parameter value is empty'
       throw error
     }
 
@@ -167,14 +155,6 @@ export default class Parameters extends ComponentsAbstraction
     {
       const error = new Error(`Invalid "in" attribute ${parameter.in}`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      throw error
-    }
-
-    if('query' !== parameter.in
-    && 'allowEmptyValue' in parameter)
-    {
-      const error = new Error('The "allowEmptyValue" attribute is only valid for query parameters')
-      error.code  = 'E_OAS_UNSUPORTED_SPECIFICATION'
       throw error
     }
 

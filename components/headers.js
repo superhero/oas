@@ -1,4 +1,5 @@
 import ComponentsAbstraction from './abstraction.js'
+import Schemas               from './schemas.js'
 
 /**
  * @memberof Oas.Components
@@ -11,10 +12,10 @@ export default class Headers extends ComponentsAbstraction
     'example', 'examples', '$ref'
   ]
 
-  constructor(specification, schemas)
+  constructor(specification)
   {
     super(specification)
-    this.schemas = schemas
+    this.schemas = new Schemas(specification)
   }
 
   conform(component, instance)
@@ -27,7 +28,7 @@ export default class Headers extends ComponentsAbstraction
       {
         return this.conformRef(component.$ref, instance)
       }
-      
+
       if(component.required
       && undefined === instance)
       {
@@ -75,24 +76,6 @@ export default class Headers extends ComponentsAbstraction
       const error = new Error(`The ref pointer "${pointer}" must point to a headers component`)
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
       throw error
-    }
-  }
-
-  validateComponentAttributes(component)
-  {
-    for(const header in component)
-    {
-      try
-      {
-        super.validateComponentAttributes(component[header])
-      }
-      catch(reason)
-      {
-        const error = new Error(`Invalid header "${header}" in component`)
-        error.code  = 'E_OAS_INVALID_SPECIFICATION'
-        error.cause = reason
-        throw error
-      }
     }
   }
 }

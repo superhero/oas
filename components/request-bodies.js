@@ -1,4 +1,5 @@
 import ComponentsAbstraction from './abstraction.js'
+import Schemas               from './schemas.js'
 
 /**
  * @memberof Oas.Components
@@ -10,10 +11,10 @@ export default class RequestBodies extends ComponentsAbstraction
     'description', 'required', 'content', '$ref'
   ]
 
-  constructor(specification, schemas)
+  constructor(specification)
   {
     super(specification)
-    this.schemas = schemas
+    this.schemas = new Schemas(specification)
   }
 
   /**

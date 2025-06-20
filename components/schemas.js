@@ -71,6 +71,12 @@ export default class Schemas extends ComponentsAbstraction
       instance = this.conformAnyOf(component, instance, isWriting)
       instance = this.conformOneOf(component, instance, isWriting)
 
+      if(component.nullable
+      && 'null' === String(instance).toLocaleLowerCase())
+      {
+        return null
+      }
+
       const instanceType = Object.prototype.toString.call(instance)
 
       if('[object Null]'      !== instanceType
@@ -122,7 +128,7 @@ export default class Schemas extends ComponentsAbstraction
         }
       }
 
-      if(null   === instance 
+      if('null' === String(instance).toLocaleLowerCase() 
       && true   !== component.nullable 
       && 'null' !== component.type)
       {

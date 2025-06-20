@@ -1,3 +1,4 @@
+import deepmerge      from '@superhero/deep/merge'
 import Headers        from '@superhero/oas/components/headers'
 import Parameters     from '@superhero/oas/components/parameters'
 import RequestBodies  from '@superhero/oas/components/request-bodies'
@@ -8,171 +9,97 @@ import fs             from 'node:fs/promises'
 
 export async function locate(locator)
 {
-  const
-    server        = locator('@superhero/http-server'),
-    specification = await findSpecification(locator.config)
+  try
+  {
+    const
+      oasEntries    = locator.config.findAbsolutePathAndValueByConfigPath('oas'),
+      specification = await findSpecification(oasEntries)
 
-  return new OAS(server, specification)
+    return new OAS(specification)
+  }
+  catch(reason)
+  {
+    const error = new Error(`Failed to locate OpenAPI Specification`)
+    error.code  = 'E_OAS_LOCATE'
+    error.cause = reason
+    throw error
+  }
 }
 
 /**
  * Find the OpenAPI Specification in the configuration, and locates it from disk 
  * if a string path is configured.
- * 
- * @param {'@superhero/config'} config
+ * @param {'Array<Array<string, *>>'} oasEntries
  * @returns {Promise<Object>} The OpenAPI Specification object.
  */
-export async function findSpecification(config)
+export async function findSpecification(oasEntries)
 {
-  let specification = config.find('oas')
+  const collection = []
 
-  if('string' === typeof specification)
+  for(let [ configFilePath, specifications ] of oasEntries)
   {
-    if(false === path.isAbsolute(specification))
+    for(let specification of [ specifications ].flat())
     {
-      const absolute = config.findAbsoluteDirPathByConfigEntry('oas', specification)
-      specification  = path.join(absolute, specification)
-    }
+      if('string' === typeof specification)
+      {
+        let oasPath = specification
 
-    specification = await fs.readFile(specification, 'utf8')
-    specification = JSON.parse(specification)
+        if(false === path.isAbsolute(oasPath))
+        {
+          oasPath = path.join(path.dirname(configFilePath), oasPath)
+        }
+
+        specification = await loadSpecification(oasPath)
+      }
+
+      collection.unshift(specification)
+    }
   }
 
-  return specification
+  return deepmerge(...collection)
+}
+
+/**
+ * Load the OpenAPI Specification from a file.
+ * @param {string} filepath - The path to the OpenAPI Specification file.
+ * @returns {Promise<Object>} The parsed OpenAPI Specification object.
+ * @throws {Error} E_OAS_LOAD_SPECIFICATION - If the file cannot be read or parsed.
+ */
+export async function loadSpecification(filepath)
+{
+  try
+  {
+    let specification
+
+    specification = await fs.readFile(filepath, 'utf8')
+    specification = JSON.parse(specification)
+
+    return specification
+  }
+  catch(reason)
+  {
+    const error = new Error(`Failed to load OpenAPI Specification from "${filepath}"`)
+    error.code  = 'E_OAS_LOAD_SPECIFICATION'
+    error.cause = reason
+    throw error
+  }
 }
 
 export default class OAS
 {
-  constructor(server, specification)
+  constructor(specification)
   {
-    this.server         = server
-    this.router         = server.router
     this.specification  = specification
 
     this.schemas        = new Schemas(specification)
-    this.headers        = new Headers(specification, this.schemas)
-    this.parameters     = new Parameters(specification, this.schemas)
-    this.requestBodies  = new RequestBodies(specification, this.schemas)
-    this.responses      = new Responses(specification, this.schemas, this.headers)
-  }
-
-  bootstrap()
-  {
-    this.setSpecification(this.router, this.specification)
-  }
-
-  setSpecification(router, specification)
-  {
-    this.validatePathsType(specification?.paths)
-
-    for(const path in specification.paths)
-    {
-      try
-      {
-        const route = this.createRoute(specification.paths[path])
-        route.criteria = path.replace(/\{([^}]+)\}/g, ':$1'),
-        router.set('oas/paths/~' + path, route)
-      }
-      catch(reason)
-      {
-        const error = new Error(`Invalid specification for path "${path}"`)
-        error.code  = 'E_OAS_INVALID_SPECIFICATION'
-        error.cause = reason
-        throw error
-      }
-    }
-  }
-
-  validatePathsType(paths)
-  {
-    const pathsType = Object.prototype.toString.call(paths)
-
-    if('[object Object]' !== pathsType)
-    {
-      const error = new Error('The paths property in the specification must be of type [object Object]')
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      error.cause = `The paths property in the specification is of invalid type ${pathsType}`
-      throw error
-    }
-  }
-
-  createRoute(pathObject)
-  {
-    const
-      dispatcher  = '@superhero/http-server/dispatcher/upstream/method',
-      route       = { dispatcher },
-      oas         = {}
-
-    for(let method in pathObject)
-    {
-      const operation = pathObject[method]
-
-      try
-      {
-        this.validateOperation(operation)
-        method = method.toLowerCase()
-        route['method.' + method] = this.transformOperationIdToDispatcherName(operation.operationId)
-        oas[method.toUpperCase()] = operation
-      }
-      catch(reason)
-      {
-        const error = new Error(`Invalid operation "${operation.operationId}" in "${method}"`)
-        error.code  = 'E_OAS_INVALID_OPERATION'
-        error.cause = reason
-        throw error
-      }
-    }
-
-    Object.defineProperty(route, 'oas', { value: oas })
-
-    const
-      contentTypeDispatcherPrefix = '@superhero/http-server/dispatcher/upstream/header/content-type/',
-      contentType                 = 'application/json'
-
-    route['content-type.' + contentType] = contentTypeDispatcherPrefix + contentType
-
-    route.middleware =
-    [
-      '@superhero/oas/dispatcher/upstream/parameters',
-      '@superhero/http-server/dispatcher/upstream/header/content-type',
-      '@superhero/oas/dispatcher/upstream/request-bodies',
-      '@superhero/oas/dispatcher/downstream/responses'
-    ]
-
-    return route
+    this.headers        = new Headers(specification)
+    this.parameters     = new Parameters(specification)
+    this.requestBodies  = new RequestBodies(specification)
+    this.responses      = new Responses(specification)
   }
 
   validateOperation(operation)
   {
-    if(false === 'operationId' in operation)
-    {
-      const error = new TypeError(`The operation must define an operationId`)
-      error.code  = 'E_OAS_MISSING_OPERATION_ID'
-      error.cause = `The operationId is expected to define a valid dispatcher for the operation`
-      throw error
-    }
-
-    try
-    {
-      const 
-        serviceName = this.transformOperationIdToDispatcherName(operation.operationId),
-        dispatcher  = this.router.locate(serviceName)
-
-      if(false === 'dispatch' in dispatcher)
-      {
-        const error = new Error(`Dispatcher "${serviceName}" does not have the expected dispatch method`)
-        error.code = 'E_OAS_DISPATCHER_MISSING_DISPATCH_METHOD'
-        throw error
-      }
-    }
-    catch(reason)
-    {
-      const error = new Error(`Invalid dispatcher for operation "${operation.operationId}"`)
-      error.code  = 'E_OAS_INVALID_DISPATCHER'
-      error.cause = reason
-      throw error
-    }
-
     operation.parameters
     && this.parameters.validateComponent(operation.parameters)
 
@@ -180,17 +107,5 @@ export default class OAS
     && this.requestBodies.validateComponent(operation.requestBody)
 
     this.responses.validateComponent(operation.responses)
-  }
-
-  /**
-   * Three dots # is used as a delimiter if a generic dispatcher is required,
-   * else the operationId is used as the dispatcher name.
-   * 
-   * @param {string} operationId
-   * @returns {string}
-   */
-  transformOperationIdToDispatcherName(operationId)
-  {
-    return String(operationId).split('#')[0]
   }
 }

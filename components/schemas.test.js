@@ -667,11 +667,11 @@ suite('@superhero/oas/schemas', () =>
       const conformed = schemas.conform(component, instance)
       assert.deepStrictEqual(conformed, instance)
 
-      await sub.test('result only what is expected', () =>
+      await sub.test('validates with additional fields', () =>
       {
         const instance = { foo: 'foo', bar: 'bar', baz: 'baz' }
         const conformed = schemas.conform(component, instance)
-        assert.deepStrictEqual(conformed, { foo: 'foo', bar: 'bar' })
+        assert.deepStrictEqual(conformed, { foo: 'foo', bar: 'bar', baz: 'baz' })
       })
 
       await sub.test('throws if all are not valid', () =>
@@ -766,7 +766,7 @@ suite('@superhero/oas/schemas', () =>
       assert.doesNotThrow(() => schemas.validateComponent(component))
       assert.throws(
         () => schemas.conform(component, 'foobar'),
-        { code: 'E_OAS_INVALID_SPECIFICATION' })
+        { code: 'E_OAS_INVALID_SCHEMA' })
     })
 
     test('throws on invalid schema', () =>

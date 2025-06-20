@@ -1,4 +1,6 @@
 import ComponentsAbstraction from './abstraction.js'
+import Schemas               from './schemas.js'
+import Headers               from './headers.js'
 
 /**
  * @memberof Oas.Components
@@ -10,11 +12,11 @@ export default class Responses extends ComponentsAbstraction
     '$ref', 'description', 'headers', 'content', 'links'
   ]
 
-  constructor(specification, schemas, headers)
+  constructor(specification)
   {
     super(specification)
-    this.schemas = schemas
-    this.headers = headers
+    this.schemas = new Schemas(specification)
+    this.headers = new Headers(specification)
   }
 
   /**

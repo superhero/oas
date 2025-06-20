@@ -1,405 +1,91 @@
-import Config   from '@superhero/config'
-import Locate   from '@superhero/locator'
-import Request  from '@superhero/http-request'
-import assert   from 'node:assert'
-import path     from 'node:path'
-import util     from 'node:util'
-import { suite, test, beforeEach } from 'node:test'
+import Locate                   from '@superhero/locator'
+import assert                   from 'node:assert'
+import { before, suite, test }  from 'node:test'
+import path                     from 'node:path'
+import fs                       from 'node:fs/promises'
+import OAS                      from '@superhero/oas'
+import { findSpecification, loadSpecification } from '@superhero/oas'
 
-util.inspect.defaultOptions.depth = 5
-
-suite('@superhero/oas', () => 
+suite('@superhero/oas', () =>
 {
-  let locate, config, oas
-
-  beforeEach(async () => 
+  test('should load OpenAPI specification', async () =>
   {
-    if(beforeEach.skip)
+    const locator = new Locate()
+    locator.config.assign(
     {
-      return
-    }
-
-    locate = new Locate()
-    config = new Config()
-    locate.set('@superhero/config', config)
-    
-    {
-      const { filepath, config: resolved } = await config.resolve('@superhero/http-server')
-      config.add(filepath, resolved)
-    }
-    
-    locate.pathResolver.basePath = path.resolve('./node_modules/@superhero/http-server')
-    await locate.eagerload(config.find('locator'))
-    locate.pathResolver.basePath = path.resolve('.')
-
-    {
-      const { filepath, config: resolved } = await config.resolve(path.resolve('./config.json'))
-      await config.add(filepath, resolved)
-    }
-
-    await locate.eagerload(
-    {
-      '@superhero/oas'                                    : path.resolve('./index.js'),
-      // middleware
-      '@superhero/oas/dispatcher/upstream/parameters'     : path.resolve('./dispatcher/upstream/parameters.js'),
-      '@superhero/oas/dispatcher/upstream/request-bodies' : path.resolve('./dispatcher/upstream/request-bodies.js'),
-      '@superhero/oas/dispatcher/downstream/responses'    : path.resolve('./dispatcher/downstream/responses.js')
-    })
-
-    locate.set('placeholder', { dispatch: () => 'placeholder' })
-  })
-
-  test('Can set a simple specification', () => 
-  {
-    const specification = 
-      { paths:
-        { '/foo': 
-          { get:  { operationId: 'placeholder#1', responses: { 200: {} }},
-            post: { operationId: 'placeholder#2', responses: { 200: {} }}
-          },
-          '/bar':
-          { put:  { operationId: 'placeholder#3', responses: { 200: {} }} }}}
-
-    config.assign({ oas:specification })
-    oas = locate('@superhero/oas')
-    oas.bootstrap()
-
-    assert.ok(oas.router.has('oas/paths/~/foo'), 'Route for /foo should be added')
-    assert.ok(oas.router.has('oas/paths/~/bar'), 'Route for /bar should be added')
-  })
-
-  test('Can add middleware for requestBody content', () => 
-  {
-    const specification =
-      { paths:
-        { '/foo':
-          { post:
-            { operationId : 'placeholder',
-              requestBody : { content: { 'application/json': {} } },
-              responses   : { 200: {} } }}}}
-
-    config.assign({ oas:specification })
-    oas = locate('@superhero/oas')
-    oas.bootstrap()
-
-    const
-      route             = oas.router.get('oas/paths/~/foo'),
-      hasRequestBodies  = route.route.middleware.includes('@superhero/oas/dispatcher/upstream/request-bodies')
-
-    assert.ok(hasRequestBodies, 'Middleware for requestBody should be added')
-    assert.equal(
-      route.route['content-type.application/json'],
-      '@superhero/http-server/dispatcher/upstream/header/content-type/application/json')
-  })
-
-  test('Can add middleware for parameters', () => 
-  {
-    const specification = 
-      { paths: 
-        { '/foo': 
-          { get: 
-            { operationId : 'placeholder',
-              parameters  : [],
-              responses   : { 200: {} } }}}}
-
-    config.assign({ oas:specification })
-    oas = locate('@superhero/oas')
-    oas.bootstrap()
-
-    const
-      route         = oas.router.get('oas/paths/~/foo'),
-      hasParameters = route.route.middleware.includes('@superhero/oas/dispatcher/upstream/parameters')
-
-    assert.ok(hasParameters, 'Middleware for parameters should be added')
-  })
-
-  test('Specification with reference to components', async (sub) => 
-  {
-    const specification =
-      { components:
-        { headers:
-          { ContentType: 
-            { required: true, 
-              schema: { type: 'string' }}
-          },
-          parameters:
-          { DefaultFoo:   { name: 'foo', in: 'query',  required: true,  schema: { '$ref': '#/components/schemas/String' }, nullable: true, default: null },
-            RequiredFoo:  { name: 'foo', in: 'query',  required: true,  schema: { '$ref': '#/components/schemas/String' }},
-            PathFoo:      { name: 'foo', in: 'path',   required: true,  schema: { '$ref': '#/components/schemas/String' }},
-            QueryFoo:     { name: 'foo', in: 'query',  required: false, schema: { '$ref': '#/components/schemas/String' }},
-            HeaderFoo:    { name: 'foo', in: 'header', required: false, schema: { '$ref': '#/components/schemas/String' }}
-          },
-          requestBodies:
-          { ExampleRequestBody: { '$ref': '#/components/requestBodies/GenericRequestBody' },
-            GenericRequestBody:
-            { required: true,
-              content: { 'application/json': { schema: { '$ref': '#/components/schemas/Foo' }}}}
-          },
-          responses:
-          { SuccessResult:
-            { description: 'Successful result',
-              headers: { 'Content-Type': { '$ref': '#/components/headers/ContentType' }},
-              content: { 'application/json': { schema: { '$ref': '#/components/schemas/Result' }}}
-            },
-            BadRequest:
-            { description: 'Bad Request',
-              schema: { '$ref': '#/components/schemas/Result' }}
-          },
-          schemas:
-          { String: { type: 'string' },
-            Foo:
-            { type: 'object',
-              properties: { foo: { '$ref': '#/components/schemas/String' }}},
-            Result:
-            { type: 'object',
-              properties: { result: { '$ref': '#/components/schemas/String' } }}
+      'oas':
+      {
+        'paths':
+        {
+          '/':
+          {
+            'get':
+            {
+              'parameters': [],
+              'requestBody':
+              {
+                'content':
+                {
+                  'application/json': {
+                    'schema': { 'type': 'object' }
+                  }
+                }
+              },
+              'responses':
+              {
+                '200': { 'description': 'Root endpoint' }
+              }
+            }
           }
-        },
-        paths:
-        { '/example/default':
-          { get:
-            { operationId: 'test/dispatcher/1#default',
-              parameters: [{ '$ref': '#/components/parameters/DefaultFoo' }],
-              responses:
-              { 200: { '$ref': '#/components/responses/SuccessResult' },
-                400: { '$ref': '#/components/responses/BadRequest' }}}
-          },
-          '/example/required':
-          { get:
-            { operationId: 'test/dispatcher/1#required',
-              parameters: [{ '$ref': '#/components/parameters/RequiredFoo' }],
-              responses:
-              { 200: { '$ref': '#/components/responses/SuccessResult' },
-                400: { '$ref': '#/components/responses/BadRequest' }}}
-          },
-          '/example/{foo}':
-          { get:
-            { operationId: 'test/dispatcher/1#path',
-              parameters: [{ '$ref': '#/components/parameters/PathFoo' }],
-              responses:
-              { 200: { '$ref': '#/components/responses/SuccessResult' },
-                400: { '$ref': '#/components/responses/BadRequest' }}}
-          },
-          '/example':
-          { get:
-            { operationId: 'test/dispatcher/1#query',
-              parameters:
-              [ { '$ref': '#/components/parameters/QueryFoo'  },
-                { '$ref': '#/components/parameters/HeaderFoo' }
-              ],
-              responses:
-              { 200: { '$ref': '#/components/responses/SuccessResult' },
-                400: { '$ref': '#/components/responses/BadRequest' }}
-            },
-            post:
-            { operationId: 'test/dispatcher/2',
-              requestBody: { '$ref': '#/components/requestBodies/ExampleRequestBody' },
-              responses:
-              { 200: { '$ref': '#/components/responses/SuccessResult' },
-                400: { '$ref': '#/components/responses/BadRequest' }}}}}}
-
-    locate.set('test/dispatcher/1', { dispatch: (request, session) => session.view.body.result = request.param.foo })
-    locate.set('test/dispatcher/2', { dispatch: (request, session) => session.view.body.result = request.body.foo })
-
-    config.assign({ oas:specification })
-    oas = locate('@superhero/oas')
-    oas.bootstrap()
-
-    const route = oas.router.get('oas/paths/~/example')
-
-    assert.ok(route, 'route for /example should exist')
-    assert.ok(route.route.middleware.includes('@superhero/oas/dispatcher/upstream/parameters'))
-    assert.ok(route.route.middleware.includes('@superhero/oas/dispatcher/upstream/request-bodies'))
-    assert.ok(route.route.middleware.includes('@superhero/oas/dispatcher/downstream/responses'))
-    assert.ok(route.route.middleware.includes('@superhero/http-server/dispatcher/upstream/header/content-type'))
-
-    assert.equal(route.route['content-type.application/json'], '@superhero/http-server/dispatcher/upstream/header/content-type/application/json')
-
-    assert.equal(route.route['method.get'],  'test/dispatcher/1', 'Correct dispathcer for GET method')
-    assert.equal(route.route['method.post'], 'test/dispatcher/2', 'Correct dispathcer for POST method')
-
-    const httpServer = locate('@superhero/http-server')
-    await httpServer.bootstrap()
-    await httpServer.listen()
-
-    beforeEach.skip = true
-
-    await sub.test('GET method using default parameter', async () =>
-    {
-      const
-        baseUrl   = `http://localhost:${httpServer.gateway.address().port}`,
-        request   = new Request({ url: baseUrl, doNotThrowOnErrorStatus: true }),
-        response  = await request.get({ url: '/example/default', headers: { 'connection': 'close', 'content-type': 'application/json' }})
-
-      assert.equal(response.status, 200, '200 status code for GET method')
-      assert.equal(response.body.result, null, 'Correct response body for GET method')
+        }
+      }
     })
 
-    await sub.test('GET method not using required parameter', async () =>
-    {
-      const
-        baseUrl   = `http://localhost:${httpServer.gateway.address().port}`,
-        request   = new Request({ url: baseUrl, doNotThrowOnErrorStatus: true }),
-        response  = await request.get({ url: '/example/required', headers: { 'connection': 'close', 'content-type': 'application/json' }})
+    const instance = await locator.lazyload('@superhero/oas')
 
-      assert.equal(response.status, 400, '400 status code for GET method')
-    })
+    assert(instance instanceof OAS, 'Loaded instance should be of class OAS')
+    assert(instance.schemas,        'Instance should have schemas')
+    assert(instance.headers,        'Instance should have headers')
+    assert(instance.parameters,     'Instance should have parameters')
+    assert(instance.requestBodies,  'Instance should have requestBodies')
+    assert(instance.responses,      'Instance should have responses')
 
-    await sub.test('GET method using path parameter', async () =>
-    {
-      const
-        baseUrl   = `http://localhost:${httpServer.gateway.address().port}`,
-        request   = new Request({ url: baseUrl, doNotThrowOnErrorStatus: true }),
-        response  = await request.get({ url: '/example/path', headers: { 'connection': 'close', 'content-type': 'application/json' }})
+    const operation = locator.config.find('oas/paths/\\//get')
 
-      assert.equal(response.status, 200, '200 status code for GET method')
-      assert.equal(response.body.result, 'path', 'Correct response body for GET method')
-    })
+    assert.doesNotThrow(() =>
+      instance.validateOperation(operation), 
+      'Operation validation should not throw')
+  })
+})
+  
+suite('@superhero/oas/loader', () => 
+{
+  const configDir = './test/mock-config'
+  const absPath   = path.resolve(configDir, 'oas.json')
 
-    await sub.test('GET method using query parameter', async () =>
-    {
-      const
-        baseUrl   = `http://localhost:${httpServer.gateway.address().port}`,
-        request   = new Request({ url: baseUrl, doNotThrowOnErrorStatus: true }),
-        response  = await request.get({ url: '/example?foo=query', headers: { 'connection': 'close', 'content-type': 'application/json' }})
-
-      assert.equal(response.status, 200, '200 status code for GET method')
-      assert.equal(response.body.result, 'query', 'Correct response body for GET method')
-    })
-
-    await sub.test('GET method using header parameter', async () =>
-    {
-      const
-        baseUrl   = `http://localhost:${httpServer.gateway.address().port}`,
-        request   = new Request({ url: baseUrl, doNotThrowOnErrorStatus: true }),
-        response  = await request.get({ url: '/example', headers: { 'foo':'header', 'connection': 'close', 'content-type': 'application/json' }})
-
-      assert.equal(response.status, 200, '200 status code for GET method')
-      assert.equal(response.body.result, 'header', 'Correct response body for GET method')
-    })
-
-    await sub.test('POST method using request body', async () =>
-    {
-      const
-        baseUrl   = `http://localhost:${httpServer.gateway.address().port}`,
-        request   = new Request({ url: baseUrl, doNotThrowOnErrorStatus: true }),
-        response  = await request.post({ url: '/example', body: { foo: 'body' }, headers: { 'connection': 'close', 'content-type': 'application/json' }})
-
-      assert.equal(response.status, 200, '200 status code for POST method')
-      assert.equal(response.body.result, 'body', 'Correct response body for POST method')
-    })
-
-    beforeEach.skip = false
-
-    await httpServer.close()
+  before(async () => 
+  {
+    await fs.mkdir(configDir, { recursive: true })
+    await fs.writeFile(absPath, JSON.stringify({ openapi: '3.0.0', info: { title: 'test', version: '1.0.0' } }), 'utf8')
   })
 
-  test('Throws error for invalid paths type in specification', () => 
+  test('merges inline and file-based entries', async () => 
   {
-    config.assign({ paths: 'invalid' })
-    oas = locate('@superhero/oas')
+    const oasEntries = 
+    [
+      [ '/some/config/path.json', { openapi: '3.0.0', info: { title: 'inline', version: '1.0.0' } } ],
+      [ '/some/config/path.json', absPath ]
+    ]
 
-    assert.throws(
-      () => oas.bootstrap(),
-      { code: 'E_OAS_INVALID_SPECIFICATION' },
-      'Should throw due to invalid paths type')
+    const result = await findSpecification(oasEntries)
+    assert.strictEqual(result.openapi, '3.0.0')
+    assert.strictEqual(result.info.title, 'inline')
   })
 
-  test('Throws error for missing response', () => 
+  test('fails on unreadable file', async () => 
   {
-    const invalidSpecification = 
-      { paths: { '/foo': { get: { operationId : 'placeholder' }}}}
-
-    config.assign({ oas:invalidSpecification })
-    oas = locate('@superhero/oas')
-
-    assert.throws(
-      () => oas.bootstrap(),
-      { code: 'E_OAS_INVALID_SPECIFICATION' },
-      'Should throw due to missing status code attribute')
-  })
-
-  test('Throws error for missing operationId in operation', () => 
-  {
-    const invalidSpecification = 
-      { paths: { '/foo': { get: { responses: { 200: {} } }}}}
-
-    config.assign({ oas:invalidSpecification })
-    oas = locate('@superhero/oas')
-
-    assert.throws(
-      () => oas.bootstrap(),
-      { code: 'E_OAS_UNSUPORTED_SPECIFICATION' },
-      'Should throw due to missing operationId')
-  })
-
-  test('Throws error for missing responses in operation', () => 
-  {
-    const invalidSpecification = 
-      { paths: { '/foo': { get: { operationId: 'placeholder' }}}}
-
-    config.assign({ oas:invalidSpecification })
-    oas = locate('@superhero/oas')
-
-    assert.throws(
-      () => oas.bootstrap(),
-      { code: 'E_OAS_INVALID_SPECIFICATION' },
-      'Should throw due to missing responses')
-  })
-
-  test('Throws error for missing response code', () => 
-  {
-    const invalidSpecification = 
-      { paths:
-        { '/foo': 
-          { get: 
-            { operationId : 'placeholder', 
-              responses   : {} }}}}
-
-    config.assign({ oas:invalidSpecification })
-    oas = locate('@superhero/oas')
-
-    assert.throws(
-      () => oas.bootstrap(),
-      { code: 'E_OAS_INVALID_SPECIFICATION' },
-      'Should throw due to missing status code attribute')
-  })
-
-  test('Throws error for unsupported content type in requestBody', () => 
-  {
-    const invalidSpecification = 
-      { paths: 
-        { '/foo': 
-          { post: 
-            { operationId : 'placeholder',
-              requestBody : { content: { 'unsupported/type': {} } },
-              responses   : { 200: {} } }}}}
-
-    config.assign({ oas:invalidSpecification })
-    oas = locate('@superhero/oas')
-          
-    assert.throws(
-      () => oas.bootstrap(),
-      { code: 'E_OAS_UNSUPORTED_SPECIFICATION' },
-      'Should throw due to unsupported content type')
-  })
-
-  test('Throws error for invalid parameters type', () => 
-  {
-    const invalidSpecification = 
-      { paths:
-        { '/foo':
-          { get:
-            { operationId : 'placeholder',
-              parameters  : 'invalid',
-              responses   : { 200: {} }}}}}
-
-    config.assign({ oas:invalidSpecification })
-    oas = locate('@superhero/oas')
-
-    assert.throws(
-      () => oas.bootstrap(),
-      { code: 'E_OAS_INVALID_SPECIFICATION' },
-      'Should throw due to invalid parameters type')
+    await assert.rejects(
+      () => loadSpecification('non-existent-file.json'),
+      { code: 'E_OAS_LOAD_SPECIFICATION' })
   })
 })

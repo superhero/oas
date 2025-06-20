@@ -3,10 +3,6 @@
   {
     "@superhero/oas": true
   },
-  "dependency":
-  {
-    "@superhero/http-server": true
-  },
   "locator":
   {
     "@superhero/oas": 
