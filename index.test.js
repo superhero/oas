@@ -56,6 +56,93 @@ suite('@superhero/oas', () =>
       instance.validateOperation(operation), 
       'Operation validation should not throw')
   })
+
+  test('can denormalize an operation', async () =>
+  {
+    const specification = {
+      components: {
+        parameters: {
+          UserId: {
+            name: 'userId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' }
+          }
+        },
+        requestBodies: {
+          CreateUser: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name'],
+                  properties: {
+                    name: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          UserCreated: {
+            description: 'User created successfully.'
+          },
+          BadRequest: {
+            description: 'Invalid input.'
+          }
+        }
+      }
+    }
+  
+    const operation = {
+      parameters: [
+        { $ref: '#/components/parameters/UserId' }
+      ],
+      requestBody: {
+        $ref: '#/components/requestBodies/CreateUser'
+      },
+      responses: {
+        '201': { $ref: '#/components/responses/UserCreated' },
+        '400': { $ref: '#/components/responses/BadRequest' }
+      }
+    }
+
+    const 
+      oas           = new OAS(specification),
+      denormalized  = oas.denormalizeOperation(operation)
+
+    assert.deepEqual(denormalized,
+    {
+      parameters: [
+        {
+          name: 'userId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string' }
+        }
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['name'],
+              properties: {
+                name: { type: 'string' }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        '201': { description: 'User created successfully.' },
+        '400': { description: 'Invalid input.' }
+      }
+    })
+  })
 })
   
 suite('@superhero/oas/loader', () => 

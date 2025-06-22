@@ -77,13 +77,13 @@ suite('@superhero/oas/parameters', () =>
     test('throws on unsupported allowReserved', () =>
     {
       const component = { name: 'foo', in: 'query', allowReserved: true }
-      assert.throws(() => parameters.validateParameterComponent(component), { code: 'E_OAS_UNSUPORTED_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(component), { code: 'E_OAS_UNSUPORTED_SPECIFICATION' })
     })
 
     test('throws on unsupported style', () =>
     {
       const component = { name: 'foo', in: 'query', style: 'form' }
-      assert.throws(() => parameters.validateParameterComponent(component), { code: 'E_OAS_UNSUPORTED_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(component), { code: 'E_OAS_UNSUPORTED_SPECIFICATION' })
     })
 
     test('throws on invalid $ref target', () =>
@@ -101,10 +101,10 @@ suite('@superhero/oas/parameters', () =>
       assert.throws(() => parameters.validateComponent({}), { code: 'E_OAS_INVALID_SPECIFICATION' })
     })
 
-    test('validates an array of parameter objects', () =>
+    test('an array of parameter objects are not valid', () =>
     {
       const input = [ { name: 'foo', in: 'query' }, { name: 'bar', in: 'path', required: true } ]
-      assert.doesNotThrow(() => parameters.validateComponent(input))
+      assert.throws(() => parameters.validateComponent(input))
     })
 
     test('throws if parameter is not object', () =>

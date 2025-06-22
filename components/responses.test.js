@@ -125,9 +125,9 @@ suite('@superhero/oas/responses', () =>
 
   suite('validateComponentAttributes', () =>
   {
-    test('throws if empty response object', () =>
+    test('does not throw if an empty response object', () =>
     {
-      assert.throws(() => responses.validateComponentAttributes({}), 
+      assert.doesNotThrow(() => responses.validateComponentAttributes({}), 
       { code: 'E_OAS_INVALID_SPECIFICATION' })
     })
 
@@ -135,15 +135,6 @@ suite('@superhero/oas/responses', () =>
     {
       assert.throws(() => responses.validateComponentAttributes({ '2000': {} }), 
       { code: 'E_OAS_INVALID_SPECIFICATION' })
-    })
-
-    test('accepts valid status code response object', () =>
-    {
-      assert.doesNotThrow(() =>
-      {
-        responses.validateComponentAttributes(
-        { '200': { description: 'OK' } })
-      })
     })
   })
 })

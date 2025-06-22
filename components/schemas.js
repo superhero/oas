@@ -15,7 +15,7 @@ export default class Schemas extends ComponentsAbstraction
     'pattern', 'format', 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 
     'multipleOf', 'items', 'minItems', 'maxItems', 'uniqueItems', 'prefixItems', 
     'properties', 'required', 'additionalProperties', 'minProperties', 'maxProperties', 
-    'propertyNames', 'allOf', 'oneOf', 'anyOf', 'not', 'const', 'enum', 'additionalItems', 
+    'propertyNames', 'allOf', 'oneOf', 'anyOf', 'not', 'const', 'enum',
     'if', 'then', 'else', '$ref'
   ]
 
@@ -42,6 +42,42 @@ export default class Schemas extends ComponentsAbstraction
     this.validateStringFormat.set('ipv6',       this.validateStringFormatIpv6)
     this.validateStringFormat.set('url',        this.validateStringFormatUrl)
     this.validateStringFormat.set('uuid',       this.validateStringFormatUuid)
+  }
+
+  denormalize(component)
+  {
+    const denormalized = super.denormalize(component)
+
+    if('properties' in component)
+    {
+      for(const property in denormalized.properties)
+      {
+        if('schema' in denormalized.properties[property])
+        {
+          denormalized.properties[property] = this.denormalize(denormalized.properties[property])
+        }
+      }
+    }
+
+    const denormalize = this.denormalize.bind(this)
+
+    for(const key of [ 'items', 'prefixItems', 'additionalProperties', 'allOf', 'oneOf', 'anyOf' ])
+    {
+      if(key in denormalized)
+      {
+        denormalized[key] = [ denormalized[key] ].flat().map(denormalize)
+      }
+    }
+
+    for(const key of [ 'if', 'then', 'else', 'not' ])
+    {
+      if(key in denormalized)
+      {
+        denormalized[key] = this.denormalize(denormalized[key])
+      }
+    }
+
+    return denormalized
   }
 
   conform(component, instance, isWriting)
@@ -279,7 +315,6 @@ export default class Schemas extends ComponentsAbstraction
 
     instance = this.conformTypeArrayItems(component, instance, isWriting)
     
-    this.validateTypeArrayAdditionalItems(component, instance)
     this.validateTypeArrayMinItems(component, instance)
     this.validateTypeArrayMaxItems(component, instance)
     instance = this.validateTypeArrayUniqueItems(component, instance)
@@ -307,7 +342,7 @@ export default class Schemas extends ComponentsAbstraction
     }
 
     const 
-      items   = Array.isArray(component.items)        ? component.items       : [ component.items ],
+      items   = [ component.items ].flat(),
       output  = [],
       conform = (itemComponent, itemInstance) =>
       {
@@ -324,9 +359,7 @@ export default class Schemas extends ComponentsAbstraction
 
     if(component.prefixItems)
     {
-      const prefixItems = Array.isArray(component.prefixItems)  
-                        ? component.prefixItems 
-                        : [ component.prefixItems ]
+      const prefixItems = [ component.prefixItems ].flat()
 
       for(; i < instance.length && i < prefixItems.length; i++)
       {
@@ -722,25 +755,6 @@ export default class Schemas extends ComponentsAbstraction
       const error = new Error(`Invalid array instance type ${instanceType}`)
       error.code  = 'E_OAS_INVALID_INSTANCE'
       throw error
-    }
-  }
-
-  validateTypeArrayAdditionalItems(component, instance)
-  {
-    if('additionalItems' in component)
-    {
-      if(false === component.additionalItems)
-      {
-        const items = Array.isArray(component.items) ? component.items : [ component.items ]
-
-        if(instance.length > items.length)
-        {
-          const error = new Error(`Invalid amount of array items ${instance.length}`)
-          error.code  = 'E_OAS_INVALID_INSTANCE'
-          error.cause = 'The array can not have additional items'
-          throw error
-        }
-      }
     }
   }
 

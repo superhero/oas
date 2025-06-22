@@ -17,6 +17,21 @@ export default class RequestBodies extends ComponentsAbstraction
     this.schemas = new Schemas(specification)
   }
 
+  denormalize(component)
+  {
+    const denormalized = super.denormalize(component)
+
+    for(const contentType in denormalized.content)
+    {
+      if('schema' in denormalized.content[contentType])
+      {
+        denormalized.content[contentType].schema = this.schemas.denormalize(denormalized.content[contentType].schema)
+      }
+    }
+
+    return denormalized
+  }
+
   /**
    * @param {object} component
    * @param {object} request

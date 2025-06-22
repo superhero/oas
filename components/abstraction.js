@@ -20,7 +20,32 @@ export default class ComponentsAbstraction
 
   validComponentAttributes = []
 
+  denormalize(component)
+  {
+    if(component.$ref)
+    {
+      const 
+        path    = this.ref2path(component.$ref),
+        located = this.locateComponent(...path)
+
+      return this.denormalize(located)
+    }
+    else
+    {
+      return component
+    }
+  }
+
   conformRef(ref, instance, ...args)
+  {
+    const 
+      path      = this.ref2path(ref),
+      component = this.locateComponent(...path)
+
+    return this.conform(component, instance, ...args)
+  }
+
+  ref2path(ref)
   {
     if('string' === typeof ref)
     {
@@ -33,9 +58,7 @@ export default class ComponentsAbstraction
 
       this.validateRefRoot(root)
 
-      const component = this.locateComponentByRef(uri, segments)
-
-      return this.conform(component, instance, ...args)
+      return [ uri, ...segments ]
     }
     else
     {
@@ -46,7 +69,7 @@ export default class ComponentsAbstraction
     }
   }
 
-  locateComponentByRef(uri, path)
+  locateComponent(uri, ...path)
   {
     try
     {

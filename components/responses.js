@@ -19,6 +19,24 @@ export default class Responses extends ComponentsAbstraction
     this.headers = new Headers(specification)
   }
 
+  denormalize(component)
+  {
+    const denormalized = super.denormalize(component)
+
+    if('content' in component)
+    {
+      for(const contentType in denormalized.content)
+      {
+        if('schema' in denormalized.content[contentType])
+        {
+          denormalized.content[contentType].schema = this.schemas.denormalize(denormalized.content[contentType].schema)
+        }
+      }
+    }
+
+    return denormalized
+  }
+
   /**
    * @param {object} component
    * @param {object} view
@@ -114,43 +132,5 @@ export default class Responses extends ComponentsAbstraction
       error.code  = 'E_OAS_INVALID_SPECIFICATION'
       throw error
     }
-  }
-
-  validateComponentRef(component)
-  {
-    for(const attribute in component)
-    {
-      super.validateComponentRef(component[attribute])
-    }
-  }
-
-  validateComponentAttributes(component)
-  {
-    if(Object.keys(component).length === 0)
-    {
-      const error = new Error('The response component must have at least one status code attribute')
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
-      throw error
-    }
-
-    for(const attribute in component)
-    {
-      if(attribute < 100 
-      || attribute > 599)
-      {
-        const error = new Error(`Invalid component attribute ${attribute}`)
-        error.code  = 'E_OAS_INVALID_SPECIFICATION'
-        throw error
-      }
-      else
-      {
-        this.validateStatusComponent(component[attribute])
-      }
-    }
-  }
-
-  validateStatusComponent(component)
-  {
-    super.validateComponentAttributes(component)
   }
 }

@@ -18,6 +18,18 @@ export default class Headers extends ComponentsAbstraction
     this.schemas = new Schemas(specification)
   }
 
+  denormalize(component)
+  {
+    const denormalized = super.denormalize(component)
+
+    if('schema' in denormalized)
+    {
+      denormalized.schema = this.schemas.denormalize(denormalized.schema)
+    }
+
+    return denormalized
+  }
+
   conform(component, instance)
   {
     try

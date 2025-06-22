@@ -387,13 +387,6 @@ suite('@superhero/oas/schemas', () =>
         assert.deepStrictEqual(conformed, instance)
       })
 
-      await sub.test('additionalItems', () =>
-      {
-        const component = { type: 'array', items: { type: 'integer' }, additionalItems: false }
-        assert.doesNotThrow(() => schemas.validateComponent(component))
-        assert.throws(() => schemas.conform(component, [1,2]))
-      })
-
       await sub.test('minItems', () =>
       {
         const component = { type: 'array', items: { type: 'integer' }, minItems: 2 }
