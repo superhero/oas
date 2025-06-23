@@ -1,11 +1,47 @@
 import assert           from 'node:assert'
 import { suite, test }  from 'node:test'
 import RequestBodies    from '@superhero/oas/components/request-bodies'
-import config           from '../config.json' with { type: 'json' }
 
 suite('@superhero/oas/request-bodies', () =>
 {
-  const requestBodies = new RequestBodies(config.oas)
+  const specification = {
+    components: {
+      requestBodies: {
+        CreateUser: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/User' } } }
+        }
+      },
+      responses: {
+        UserCreated: {
+          description: 'User created successfully.'
+        },
+        BadRequest: {
+          description: 'Invalid input.'
+        }
+      },
+      schemas: {
+        'User': {
+          type: 'object',
+          required: ['name'],
+          properties: { name: { type: 'string' } }
+        }
+      }
+    },
+    paths: {
+      '/users': {
+        post: {
+          requestBody: { $ref: '#/components/requestBodies/CreateUser' },
+          responses: {
+            '201': { $ref: '#/components/responses/UserCreated' },
+            '400': { $ref: '#/components/responses/BadRequest' }
+          }
+        }
+      }
+    }
+  }
+
+  const requestBodies = new RequestBodies(specification)
 
   suite('conform', () =>
   {
@@ -162,7 +198,7 @@ suite('@superhero/oas/request-bodies', () =>
 
     test('allows $ref only without content', () =>
     {
-      const component = { $ref: '#/components/requestBodies/foo' }
+      const component = { $ref: '#/components/requestBodies/CreateUser' }
 
       assert.doesNotThrow(() => requestBodies.validateComponent(component))
     })

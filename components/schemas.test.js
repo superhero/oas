@@ -756,7 +756,7 @@ suite('@superhero/oas/schemas', () =>
     test('throws on invalid $ref', () =>
     {
       const component = { '$ref': '#/components/invalid/' }
-      assert.doesNotThrow(() => schemas.validateComponent(component))
+      assert.throws(() => schemas.validateComponent(component))
       assert.throws(
         () => schemas.conform(component, 'foobar'),
         { code: 'E_OAS_INVALID_SCHEMA' })

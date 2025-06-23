@@ -162,6 +162,12 @@ export default class ComponentsAbstraction
         error.code  = 'E_OAS_INVALID_SPECIFICATION'
         throw error
       }
+
+      const
+        path    = this.ref2path(component.$ref),
+        located = this.locateComponent(...path)
+
+      this.validateComponent(located)
     }
   }
 

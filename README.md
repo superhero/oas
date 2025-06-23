@@ -25,126 +25,38 @@ npm install @superhero/oas
 
 For detailed information about how to define an OpenAPI Specification, refer to the [OpenAPI Specification Documentation](https://spec.openapis.org/oas/latest.html).
 
-### Bootstrapping the Library
+### Initiate the OAS component
 
-Set up and bootstrap the `@superhero/oas` library with your specification:
-
-```javascript
-import HttpServer from '@superhero/http-server';
-import Locator    from '@superhero/locator';
-import OAS        from '@superhero/oas';
-import Router     from '@superhero/router';
-
-// Instantiate the service locator
-const locator = new Locator();
-
-// Instantiate the router
-const router = new Router(locator);
-
-// Instantiate the server
-const server = new HttpServer(router);
-
-// Instantiate the OAS instance
-const oas = new OAS(router)
-
-// Register the route dispatcher service
-locator.set('hello-dispatcher', {
-  dispatch: (request, session) => {
-    session.view.body.message = 'Hello, World!';
-  },
-});
-
-// Bootstrap and start the server
-await server.bootstrap();
-await server.listen(3000);
-
-// Routes
-const specification = {
-  paths: {
-    '/example': {
-      get: {
-        operationId: 'hello-dispatcher',
-        responses: { 200: { description: 'Hello World' } },
-      },
-    },
-  },
-};
-
-oas.bootstrap(specification)
-```
-
-### Adding Middleware for Parameters and Request Bodies
-
-The library automatically adds middleware for validating request parameters, request bodies, and responses as defined in the specification.
-
-For example:
+Initiate the `@superhero/oas` library with the contextual specification:
 
 ```javascript
-const specification = {
-  paths: {
-    '/example': {
-      post: {
-        operationId: 'example',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string', minLength: 1 },
-                  age: { type: 'integer', minimum: 0 },
-                },
-                required: ['name'],
-              },
-            },
-          },
-        },
-        responses: {
-          201: { description: 'Created' },
-          400: { description: 'Validation Error' },
-        },
-      },
-    },
-  },
-};
+import OAS from '@superhero/oas'
 
-oas.bootstrap(specification);
+// @see {@link https://spec.openapis.org/oas/v3.0.4.html | OAS standard}
+specification = { ... }
+const oas = new OAS(specification)
 ```
 
-This will ensure:
-- Request parameters are validated.
-- Request bodies are checked against the defined schema.
-- Responses are validated according to the specification.
-- A dispatcher called `example` will dispatch the request.
-
-### Setting Up a Dispatcher
-
-Map the `operationId` from your specification to a dispatcher:
+Using the `@superhero/core` library by adding a component that configures the `oas` key in its configurations:
 
 ```javascript
-locate.set('example-reader', {
-  dispatch: (request, session) => {
-    session.view.body = { message: `Fetched data for ID: ${request.param.id}` };
-  },
-});
+import Core from '@superhero/core'
 
-locate.set('example-writer', {
-  dispatch: (request, session) => {
-    session.view.body = { message: `Created data for ${request.body.name}` };
-  },
-});
+const core = new Core()
+core.add('@superhero/oas')
+core.add('./sub-domain/use-case') // path to a config file with the defined specifications
+await core.bootstrap()
 ```
+
+### HTTP Server and Router
+
+To Adapt the solution to be used in the context of routing and serving HTTP requests, see [@superhero/http-server-using-oas](https://github.com/superhero/http-server-using-oas).
 
 ## Error Handling
 
-The library throws descriptive errors _(will be improved on in comming versions)_ for invalid specifications or operations.
+The library throws descriptive errors for invalid specifications or operations.
 
 ## Testing
-
-The test suite uses Node.js's built-in testing module.
-
-### Running Tests
 
 To run the tests, execute:
 
@@ -160,231 +72,249 @@ npm test
 
 @superhero/oas/headers 
 ├─ conform 
-│  ├─ returns instance as-is if no schema and not required ✔ 1.463ms
-│  ├─ throws if required and missing ✔ 2.264ms
-│  ├─ returns undefined if not required and instance is missing ✔ 1.807ms
-│  ├─ validates schema if present ✔ 2.282ms
-│  ├─ throws if schema validation fails ✔ 0.359ms
-│  ├─ returns conformed value from schema ✔ 0.469ms
-│  ├─ throws if $ref is invalid ✔ 0.774ms
-│  └─ ✔ 11.524ms
-└─ ✔ 12.586ms
+│  ├─ returns instance as-is if no schema and not required ✔ 3.334ms
+│  ├─ throws if required and missing ✔ 2.930ms
+│  ├─ returns undefined if not required and instance is missing ✔ 2.141ms
+│  ├─ validates schema if present ✔ 1.473ms
+│  ├─ throws if schema validation fails ✔ 0.293ms
+│  ├─ returns conformed value from schema ✔ 0.288ms
+│  ├─ throws if $ref is invalid ✔ 6.272ms
+│  └─ ✔ 19.451ms
+└─ ✔ 20.787ms
 
 @superhero/oas/parameters 
 ├─ conform 
-│  ├─ conforms a required query parameter with schema ✔ 5.971ms
-│  ├─ uses default if missing and defined ✔ 0.840ms
-│  ├─ throws if required and missing ✔ 2.958ms
-│  ├─ allows null if nullable ✔ 0.890ms
-│  ├─ extracts from path and explodes ✔ 1.077ms
-│  ├─ extracts from header without explode ✔ 0.494ms
-│  ├─ extracts multiple from query with explode ✔ 0.770ms
-│  ├─ returns undefined if not required and not present ✔ 0.499ms
-│  ├─ throws on unsupported allowReserved ✔ 1.132ms
-│  ├─ throws on unsupported style ✔ 0.686ms
-│  ├─ throws on invalid $ref target ✔ 0.536ms
-│  └─ ✔ 18.643ms
+│  ├─ conforms a required query parameter with schema ✔ 6.999ms
+│  ├─ uses default if missing and defined ✔ 0.830ms
+│  ├─ throws if required and missing ✔ 3.908ms
+│  ├─ allows null if nullable ✔ 2.078ms
+│  ├─ extracts from path and explodes ✔ 1.164ms
+│  ├─ extracts from header without explode ✔ 0.476ms
+│  ├─ extracts multiple from query with explode ✔ 0.568ms
+│  ├─ returns undefined if not required and not present ✔ 0.484ms
+│  ├─ throws on unsupported allowReserved ✔ 1.326ms
+│  ├─ throws on unsupported style ✔ 1.039ms
+│  ├─ throws on invalid $ref target ✔ 0.742ms
+│  └─ ✔ 23.410ms
 ├─ validateComponent 
-│  ├─ throws if not array ✔ 0.558ms
-│  ├─ validates an array of parameter objects ✔ 1.140ms
-│  ├─ throws if parameter is not object ✔ 0.314ms
-│  ├─ throws if name is missing ✔ 0.241ms
-│  ├─ throws if in is missing ✔ 0.196ms
-│  ├─ throws if in is invalid ✔ 0.276ms
-│  └─ ✔ 3.101ms
-└─ ✔ 23.056ms
+│  ├─ throws if not array ✔ 0.588ms
+│  ├─ an array of parameter objects are not valid ✔ 0.278ms
+│  ├─ throws if parameter is not object ✔ 0.296ms
+│  ├─ throws if name is missing ✔ 0.309ms
+│  ├─ throws if in is missing ✔ 0.260ms
+│  ├─ throws if in is invalid ✔ 2.611ms
+│  └─ ✔ 5.428ms
+└─ ✔ 29.914ms
 
 @superhero/oas/request-bodies 
 ├─ conform 
-│  ├─ conforms valid application/json request body ✔ 8.238ms
-│  ├─ throws if content-type does not match ✔ 1.203ms
-│  ├─ supports wildcard content type ✔ 0.377ms
-│  ├─ throws if matching content-type lacks schema ✔ 0.462ms
-│  ├─ throws on invalid $ref ✔ 0.732ms
-│  └─ ✔ 13.382ms
+│  ├─ conforms valid application/json request body ✔ 6.473ms
+│  ├─ throws if content-type does not match ✔ 7.348ms
+│  ├─ supports wildcard content type ✔ 3.554ms
+│  ├─ throws if matching content-type lacks schema ✔ 0.518ms
+│  ├─ throws on invalid $ref ✔ 0.897ms
+│  └─ ✔ 21.101ms
 ├─ validateComponent 
-│  ├─ valid component with application/json ✔ 1.221ms
-│  ├─ throws if content is not an object ✔ 0.403ms
-│  ├─ throws if application/json is missing ✔ 0.751ms
-│  ├─ throws if multiple content types defined ✔ 0.765ms
-│  ├─ allows $ref only without content ✔ 0.657ms
-│  └─ ✔ 6.671ms
-└─ ✔ 21.613ms
+│  ├─ valid component with application/json ✔ 1.337ms
+│  ├─ throws if content is not an object ✔ 0.306ms
+│  ├─ throws if application/json is missing ✔ 15.538ms
+│  ├─ throws if multiple content types defined ✔ 1.624ms
+│  ├─ allows $ref only without content ✔ 0.960ms
+│  └─ ✔ 20.449ms
+└─ ✔ 42.639ms
 
 @superhero/oas/responses 
 ├─ conform 
-│  ├─ sets response body and content-type header from schema ✔ 9.202ms
-│  ├─ throws if unsupported content type in content ✔ 0.975ms
-│  ├─ does not fail if content has no schema ✔ 0.271ms
-│  ├─ sets response headers using header schema ✔ 0.916ms
-│  ├─ throws on invalid header schema ✔ 0.364ms
-│  ├─ throws if headers is not an object ✔ 0.285ms
-│  ├─ passes through if component is a $ref ✔ 3.124ms
-│  └─ ✔ 17.570ms
+│  ├─ sets response body and content-type header from schema ✔ 6.594ms
+│  ├─ throws if unsupported content type in content ✔ 1.212ms
+│  ├─ does not fail if content has no schema ✔ 0.778ms
+│  ├─ sets response headers using header schema ✔ 3.203ms
+│  ├─ throws on invalid header schema ✔ 0.633ms
+│  ├─ throws if headers is not an object ✔ 0.421ms
+│  ├─ passes through if component is a $ref ✔ 1.093ms
+│  └─ ✔ 16.309ms
 ├─ validateRefPointer 
-│  ├─ accepts valid pointer ✔ 0.484ms
-│  ├─ throws on invalid pointer ✔ 0.658ms
-│  └─ ✔ 2.015ms
+│  ├─ accepts valid pointer ✔ 1.237ms
+│  ├─ throws on invalid pointer ✔ 0.481ms
+│  └─ ✔ 2.340ms
 ├─ validateComponentAttributes 
-│  ├─ throws if empty response object ✔ 0.892ms
-│  ├─ throws if status code is invalid ✔ 1.501ms
-│  ├─ accepts valid status code response object ✔ 0.291ms
-│  └─ ✔ 3.201ms
-└─ ✔ 26.005ms
+│  ├─ does not throw if an empty response object ✔ 0.387ms
+│  ├─ throws if status code is invalid ✔ 1.342ms
+│  └─ ✔ 1.950ms
+└─ ✔ 24.313ms
 
 @superhero/oas/schemas 
 ├─ Supported attributes 
 │  ├─ type:boolean 
-│  │  ├─ nullable enum ✔ 4.777ms
-│  │  ├─ throws if invalid enum type ✔ 1.838ms
-│  │  ├─ casts strings that can be interpreted as a boolean value to boolean ✔ 0.861ms
-│  │  ├─ throws if invalid ✔ 0.393ms
-│  │  └─ ✔ 12.113ms
+│  │  ├─ nullable enum ✔ 3.775ms
+│  │  ├─ throws if invalid enum type ✔ 0.331ms
+│  │  ├─ casts strings that can be interpreted as a boolean value to boolean ✔ 0.401ms
+│  │  ├─ throws if invalid ✔ 0.313ms
+│  │  └─ ✔ 9.994ms
 │  ├─ type:integer 
-│  │  ├─ nullable enum ✔ 1.286ms
-│  │  ├─ minimum ✔ 0.467ms
-│  │  ├─ maximum ✔ 0.530ms
-│  │  ├─ exclusiveMinimum ✔ 0.554ms
-│  │  ├─ exclusiveMaximum ✔ 0.642ms
-│  │  ├─ multipleOf ✔ 2.196ms
-│  │  ├─ format int32 ✔ 1.243ms
-│  │  ├─ format int64 ✔ 0.727ms
-│  │  ├─ throws if invalid format ✔ 0.334ms
-│  │  ├─ throws if invalid enum type ✔ 0.360ms
-│  │  ├─ throws if a decimal ✔ 0.430ms
-│  │  └─ ✔ 13.270ms
+│  │  ├─ nullable enum ✔ 1.076ms
+│  │  ├─ minimum ✔ 0.755ms
+│  │  ├─ maximum ✔ 0.630ms
+│  │  ├─ exclusiveMinimum ✔ 0.793ms
+│  │  ├─ exclusiveMaximum ✔ 0.449ms
+│  │  ├─ multipleOf ✔ 0.569ms
+│  │  ├─ format int32 ✔ 0.541ms
+│  │  ├─ format int64 ✔ 0.868ms
+│  │  ├─ throws if invalid format ✔ 0.564ms
+│  │  ├─ throws if invalid enum type ✔ 0.297ms
+│  │  ├─ throws if a decimal ✔ 0.278ms
+│  │  └─ ✔ 13.597ms
 │  ├─ type:number 
-│  │  ├─ nullable enum ✔ 0.315ms
-│  │  ├─ format float ✔ 1.323ms
-│  │  ├─ format double ✔ 1.037ms
-│  │  ├─ throws if invalid enum type ✔ 0.418ms
-│  │  ├─ casts strings that can be interpreted as a number value to number ✔ 0.482ms
-│  │  └─ ✔ 5.592ms
+│  │  ├─ nullable enum ✔ 0.395ms
+│  │  ├─ format float ✔ 0.735ms
+│  │  ├─ format double ✔ 0.436ms
+│  │  ├─ throws if invalid enum type ✔ 0.325ms
+│  │  ├─ casts strings that can be interpreted as a number value to number ✔ 0.338ms
+│  │  └─ ✔ 5.914ms
 │  ├─ type:string 
-│  │  ├─ nullable enum ✔ 0.424ms
-│  │  ├─ minLength ✔ 0.386ms
-│  │  ├─ maxLength ✔ 0.604ms
-│  │  ├─ pattern ✔ 0.845ms
-│  │  ├─ format date ✔ 6.135ms
-│  │  ├─ format time ✔ 0.743ms
-│  │  ├─ format datetime ✔ 0.469ms
-│  │  ├─ format base64 ✔ 0.630ms
-│  │  ├─ format email ✔ 0.395ms
-│  │  ├─ format ipv4 ✔ 1.505ms
-│  │  ├─ format ipv6 ✔ 16.426ms
-│  │  ├─ url ✔ 1.158ms
-│  │  ├─ format uuid ✔ 0.636ms
-│  │  ├─ throws if invalid enum type ✔ 0.247ms
-│  │  └─ ✔ 36.953ms
+│  │  ├─ nullable enum ✔ 0.497ms
+│  │  ├─ minLength ✔ 14.468ms
+│  │  ├─ maxLength ✔ 0.579ms
+│  │  ├─ pattern ✔ 0.522ms
+│  │  ├─ format date ✔ 25.211ms
+│  │  ├─ format time ✔ 2.497ms
+│  │  ├─ format datetime ✔ 5.707ms
+│  │  ├─ format base64 ✔ 3.530ms
+│  │  ├─ format email ✔ 1.841ms
+│  │  ├─ format ipv4 ✔ 1.456ms
+│  │  ├─ format ipv6 ✔ 54.619ms
+│  │  ├─ url ✔ 1.262ms
+│  │  ├─ format uuid ✔ 0.643ms
+│  │  ├─ throws if invalid enum type ✔ 0.341ms
+│  │  └─ ✔ 117.737ms
 │  ├─ type:null 
-│  │  ├─ throws if not null ✔ 0.268ms
-│  │  ├─ throws if value is null and type is not null ✔ 0.225ms
-│  │  └─ ✔ 1.063ms
-│  ├─ type:undefined ✔ 0.186ms
+│  │  ├─ throws if not null ✔ 0.631ms
+│  │  ├─ throws if value is null and type is not null ✔ 0.368ms
+│  │  └─ ✔ 2.132ms
+│  ├─ type:undefined ✔ 0.546ms
 │  ├─ type:array 
-│  │  ├─ throws if invalid type ✔ 0.411ms
-│  │  ├─ items ✔ 1.743ms
-│  │  ├─ additionalItems ✔ 0.303ms
-│  │  ├─ minItems ✔ 0.937ms
-│  │  ├─ maxItems ✔ 0.500ms
-│  │  ├─ uniqueItems ✔ 1.848ms
-│  │  ├─ enum ✔ 0.621ms
-│  │  ├─ throws if invalid enum type ✔ 0.345ms
-│  │  ├─ nullable enum ✔ 0.324ms
-│  │  ├─ nullable items ✔ 1.100ms
-│  │  ├─ nullable enum items ✔ 0.341ms
-│  │  └─ ✔ 10.676ms
+│  │  ├─ throws if invalid type ✔ 0.586ms
+│  │  ├─ items ✔ 3.435ms
+│  │  ├─ minItems ✔ 0.566ms
+│  │  ├─ maxItems ✔ 0.780ms
+│  │  ├─ uniqueItems ✔ 5.208ms
+│  │  ├─ enum ✔ 0.570ms
+│  │  ├─ throws if invalid enum type ✔ 0.335ms
+│  │  ├─ nullable enum ✔ 0.359ms
+│  │  ├─ nullable items ✔ 0.515ms
+│  │  ├─ nullable enum items ✔ 0.762ms
+│  │  └─ ✔ 17.138ms
 │  ├─ type:object 
-│  │  ├─ throws if invalid type ✔ 0.254ms
-│  │  ├─ additionalProperties ✔ 0.563ms
-│  │  ├─ minProperties ✔ 0.464ms
-│  │  ├─ maxProperties ✔ 0.505ms
-│  │  ├─ propertyNames pattern ✔ 0.767ms
-│  │  ├─ nullable ✔ 0.390ms
-│  │  ├─ enum ✔ 0.580ms
-│  │  ├─ nullable enum ✔ 1.333ms
-│  │  ├─ throws if invalid enum type ✔ 0.480ms
-│  │  └─ ✔ 9.152ms
-│  ├─ type:invalid throws ✔ 0.567ms
+│  │  ├─ throws if invalid type ✔ 0.428ms
+│  │  ├─ additionalProperties ✔ 1.131ms
+│  │  ├─ minProperties ✔ 1.092ms
+│  │  ├─ maxProperties ✔ 0.653ms
+│  │  ├─ propertyNames pattern ✔ 0.641ms
+│  │  ├─ nullable ✔ 0.440ms
+│  │  ├─ enum ✔ 0.657ms
+│  │  ├─ nullable enum ✔ 0.384ms
+│  │  ├─ throws if invalid enum type ✔ 0.319ms
+│  │  └─ ✔ 9.467ms
+│  ├─ type:invalid throws ✔ 0.970ms
 │  ├─ readOnly 
-│  │  ├─ when is reading ✔ 0.700ms
-│  │  ├─ when is writing ✔ 0.483ms
-│  │  └─ ✔ 1.931ms
+│  │  ├─ when is reading ✔ 0.407ms
+│  │  ├─ when is writing ✔ 0.370ms
+│  │  └─ ✔ 2.241ms
 │  ├─ writeOnly 
-│  │  ├─ when is reading ✔ 0.390ms
-│  │  ├─ when is writing ✔ 0.496ms
-│  │  └─ ✔ 2.215ms
+│  │  ├─ when is reading ✔ 0.293ms
+│  │  ├─ when is writing ✔ 0.223ms
+│  │  └─ ✔ 1.066ms
 │  ├─ default 
-│  │  ├─ when no value ✔ 0.359ms
-│  │  ├─ when value ✔ 0.243ms
-│  │  └─ ✔ 1.184ms
+│  │  ├─ when no value ✔ 0.216ms
+│  │  ├─ when value ✔ 0.178ms
+│  │  └─ ✔ 0.739ms
 │  ├─ if/then/else 
-│  │  ├─ then ✔ 0.211ms
-│  │  ├─ else ✔ 1.143ms
-│  │  ├─ throws if invalid ✔ 4.262ms
-│  │  └─ ✔ 6.617ms
-│  ├─ not ✔ 1.163ms
+│  │  ├─ then ✔ 0.350ms
+│  │  ├─ else ✔ 2.049ms
+│  │  ├─ throws if invalid ✔ 2.442ms
+│  │  └─ ✔ 5.922ms
+│  ├─ not ✔ 5.518ms
 │  ├─ allOf 
-│  │  ├─ validates with additional fields ✔ 0.302ms
-│  │  ├─ throws if all are not valid ✔ 0.404ms
-│  │  └─ ✔ 1.832ms
+│  │  ├─ validates with additional fields ✔ 0.483ms
+│  │  ├─ throws if all are not valid ✔ 2.168ms
+│  │  └─ ✔ 4.057ms
 │  ├─ anyOf 
-│  │  ├─ conforms to valid schema ✔ 0.578ms
-│  │  ├─ throws if none is valid ✔ 0.537ms
-│  │  └─ ✔ 1.644ms
+│  │  ├─ conforms to valid schema ✔ 2.069ms
+│  │  ├─ throws if none is valid ✔ 0.628ms
+│  │  └─ ✔ 3.900ms
 │  ├─ oneOf 
-│  │  ├─ conforms to valid schema ✔ 1.316ms
-│  │  ├─ throws if none is valid ✔ 0.743ms
-│  │  ├─ throws if more than one is valid ✔ 0.398ms
-│  │  └─ ✔ 3.654ms
-│  ├─ const ✔ 1.637ms
-│  ├─ deep const ✔ 2.313ms
-│  ├─ throws on invalid $ref ✔ 1.415ms
-│  ├─ throws on invalid schema ✔ 1.427ms
-│  └─ ✔ 119.697ms
-└─ ✔ 120.628ms
+│  │  ├─ conforms to valid schema ✔ 0.399ms
+│  │  ├─ throws if none is valid ✔ 0.495ms
+│  │  ├─ throws if more than one is valid ✔ 1.231ms
+│  │  └─ ✔ 3.105ms
+│  ├─ const ✔ 3.748ms
+│  ├─ deep const ✔ 0.992ms
+│  ├─ throws on invalid $ref ✔ 1.337ms
+│  ├─ throws on invalid schema ✔ 0.652ms
+│  └─ ✔ 216.308ms
+└─ ✔ 217.270ms
 
 @superhero/oas 
-├─ should load OpenAPI specification ✔ 67.797ms
-└─ ✔ 70.030ms
+├─ should load OpenAPI specification ✔ 69.428ms
+├─ can denormalize an operation ✔ 15.748ms
+└─ ✔ 92.228ms
 
 @superhero/oas/loader 
-├─ merges inline and file-based entries ✔ 4.740ms
-├─ fails on unreadable file ✔ 3.940ms
-└─ ✔ 28.620ms
+├─ merges inline and file-based entries ✔ 6.104ms
+├─ fails on unreadable file ✔ 3.544ms
+└─ ✔ 61.519ms
+
 
 ──────────────────────────────── ⋅⋆ Coverage ⋆⋅ ────────────────────────────────
 
 
 Files                                            Coverage   Functions   Branches
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-components/abstraction.js                             81%        100%        73%
+components/abstraction.js                             85%        100%        80%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-components/headers.js                                 95%        100%        94%
+components/headers.js                                 84%         80%        94%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 components/headers.test.js                           100%        100%       100%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-components/parameters.js                              97%        100%        93%
+components/parameters.js                              92%        100%        88%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 components/parameters.test.js                        100%        100%       100%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-components/request-bodies.js                         100%        100%        95%
+components/request-bodies.js                         100%        100%        96%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 components/request-bodies.test.js                    100%        100%       100%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-components/responses.js                              100%        100%       100%
+components/responses.js                               94%        100%        95%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 components/responses.test.js                         100%        100%       100%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-components/schemas.js                                 98%        100%        96%
+components/schemas.js                                 97%        100%        95%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 components/schemas.test.js                           100%        100%       100%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-index.js                                              92%        100%        80%
+index.js                                              81%        100%        60%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 index.test.js                                        100%        100%       100%
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-Total                                                 98%        97%        100%
+Total                                                 96%        95%         99%
+
+
+───────────────────────────────── ⋅⋆ Summary ⋆⋅ ────────────────────────────────
+
+
+Suites                                                                        16
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+Tests                                                                        141
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+Passed                                                                       141
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+Failed                                                                         0
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+Cancelled                                                                      0
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+Skipped                                                                        0
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+Todo                                                                           0
 ```
 
 ## License
