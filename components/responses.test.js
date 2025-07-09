@@ -119,7 +119,7 @@ suite('@superhero/oas/responses', () =>
     test('throws on invalid pointer', () =>
     {
       assert.throws(() => responses.validateRefPointer('/components/invalid/foo'), 
-      { code: 'E_OAS_INVALID_SPECIFICATION' })
+      { code: 'E_OAS_INVALID_RESPONSES_SPECIFICATION' })
     })
   })
 

@@ -77,13 +77,13 @@ suite('@superhero/oas/parameters', () =>
     test('throws on unsupported allowReserved', () =>
     {
       const component = { name: 'foo', in: 'query', allowReserved: true }
-      assert.throws(() => parameters.validateComponent(component), { code: 'E_OAS_UNSUPORTED_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(component), { code: 'E_OAS_UNSUPORTED_PARAMETER_SPECIFICATION' })
     })
 
     test('throws on unsupported style', () =>
     {
       const component = { name: 'foo', in: 'query', style: 'form' }
-      assert.throws(() => parameters.validateComponent(component), { code: 'E_OAS_UNSUPORTED_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(component), { code: 'E_OAS_UNSUPORTED_PARAMETER_SPECIFICATION' })
     })
 
     test('throws on invalid $ref target', () =>
@@ -98,7 +98,7 @@ suite('@superhero/oas/parameters', () =>
   {
     test('throws if not array', () =>
     {
-      assert.throws(() => parameters.validateComponent({}), { code: 'E_OAS_INVALID_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent({}), { code: 'E_OAS_INVALID_PARAMETER_SPECIFICATION' })
     })
 
     test('an array of parameter objects are not valid', () =>
@@ -110,25 +110,25 @@ suite('@superhero/oas/parameters', () =>
     test('throws if parameter is not object', () =>
     {
       const input = [ 42 ]
-      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_PARAMETER_SPECIFICATION' })
     })
 
     test('throws if name is missing', () =>
     {
       const input = [ { in: 'query' } ]
-      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_PARAMETER_SPECIFICATION' })
     })
 
     test('throws if in is missing', () =>
     {
       const input = [ { name: 'foo' } ]
-      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_PARAMETER_SPECIFICATION' })
     })
 
     test('throws if in is invalid', () =>
     {
       const input = [ { name: 'foo', in: 'cookie' } ]
-      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_SPECIFICATION' })
+      assert.throws(() => parameters.validateComponent(input), { code: 'E_OAS_INVALID_PARAMETER_SPECIFICATION' })
     })
   })
 })

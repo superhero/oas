@@ -161,7 +161,7 @@ suite('@superhero/oas/request-bodies', () =>
       const component = { content: 'invalid' }
 
       assert.throws(() => requestBodies.validateComponent(component), {
-        code: 'E_OAS_INVALID_SPECIFICATION'
+        code: 'E_OAS_INVALID_REQUEST_BODIES_SPECIFICATION'
       })
     })
 
@@ -176,7 +176,7 @@ suite('@superhero/oas/request-bodies', () =>
       }
 
       assert.throws(() => requestBodies.validateComponent(component), {
-        code: 'E_OAS_UNSUPORTED_SPECIFICATION'
+        code: 'E_OAS_UNSUPORTED_REQUEST_BODIES_SPECIFICATION'
       })
     })
 
@@ -192,7 +192,7 @@ suite('@superhero/oas/request-bodies', () =>
       }
 
       assert.throws(() => requestBodies.validateComponent(component), {
-        code: 'E_OAS_UNSUPORTED_SPECIFICATION'
+        code: 'E_OAS_UNSUPORTED_REQUEST_BODIES_SPECIFICATION'
       })
     })
 
