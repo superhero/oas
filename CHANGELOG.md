@@ -1,4 +1,10 @@
 ---
+#### v4.7.6
+---
+
+Differentiated better between different error codes.
+
+---
 #### v4.7.5
 ---
 
