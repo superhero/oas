@@ -19,6 +19,11 @@ export default class ComponentsAbstraction
   deepEqual = assert.deepEqual
 
   validComponentAttributes = []
+  validReferenceAttributes = 
+  [
+    'deprecated', 'description', 'example', 'examples', 'externalDocs', 
+    'summary', 'title'
+  ]
 
   denormalize(component)
   {
@@ -156,9 +161,9 @@ export default class ComponentsAbstraction
   {
     if('$ref' in component)
     {
-      if(Object.keys(component).length > 1)
+      if(Object.keys(component).filter(key => false === this.validReferenceAttributes.includes(key)).length > 1)
       {
-        const error = new Error('The component must only have the "$ref" attribute when defined')
+        const error = new Error('The component can only have the "$ref" attribute when defined')
         error.code  = 'E_OAS_INVALID_SPECIFICATION'
         throw error
       }

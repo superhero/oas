@@ -6,11 +6,11 @@ import Schemas               from './schemas.js'
  */
 export default class Parameters extends ComponentsAbstraction
 {
-  validParameterAttributes =
+  validComponentAttributes =
   [
     'name', 'in', 'required', 'description', 'deprecated', 
     'schema', 'style', 'explode', 'examples', 'example', 
-    'allowReserved', 'nullable', 'default', '$ref'
+    'allowReserved', 'nullable', 'default', '$ref', 'summary'
   ]
 
   constructor(specification)

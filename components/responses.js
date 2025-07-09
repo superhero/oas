@@ -9,7 +9,7 @@ export default class Responses extends ComponentsAbstraction
 {
   validComponentAttributes =
   [
-    '$ref', 'description', 'headers', 'content', 'links'
+    '$ref', 'description', 'headers', 'content', 'links', 'summary'
   ]
 
   constructor(specification)

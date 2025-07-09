@@ -16,7 +16,7 @@ export default class Schemas extends ComponentsAbstraction
     'multipleOf', 'items', 'minItems', 'maxItems', 'uniqueItems', 'prefixItems', 
     'properties', 'required', 'additionalProperties', 'minProperties', 'maxProperties', 
     'propertyNames', 'allOf', 'oneOf', 'anyOf', 'not', 'const', 'enum',
-    'if', 'then', 'else', '$ref'
+    'if', 'then', 'else', '$ref', true, false
   ]
 
   validateNumberFormat = new Map
@@ -84,6 +84,19 @@ export default class Schemas extends ComponentsAbstraction
   {
     try
     {
+      if(true === component)
+      {
+        return instance
+      }
+
+      if(false === component)
+      {
+        const error = new Error(`Invalid schema component`)
+        error.code  = 'E_OAS_INVALID_INSTANCE'
+        error.cause = 'The schema component has declared that the instance must not be used'
+        throw error
+      }
+
       if(component.$ref)
       {
         return this.conformRef(component.$ref, instance, isWriting)
@@ -106,12 +119,6 @@ export default class Schemas extends ComponentsAbstraction
       instance = this.conformAllOf(component, instance, isWriting)
       instance = this.conformAnyOf(component, instance, isWriting)
       instance = this.conformOneOf(component, instance, isWriting)
-
-      if(component.nullable
-      && 'null' === String(instance).toLocaleLowerCase())
-      {
-        return null
-      }
 
       const instanceType = Object.prototype.toString.call(instance)
 
@@ -164,7 +171,7 @@ export default class Schemas extends ComponentsAbstraction
         }
       }
 
-      if('null' === String(instance).toLocaleLowerCase() 
+      if(null   === instance
       && true   !== component.nullable 
       && 'null' !== component.type)
       {
