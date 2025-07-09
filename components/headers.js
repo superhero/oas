@@ -45,7 +45,7 @@ export default class Headers extends ComponentsAbstraction
       && undefined === instance)
       {
         const error = new Error(`Missing required header`)
-        error.code  = 'E_OAS_INVALID_INSTANCE'
+        error.code  = 'E_OAS_INVALID_HEADER_INSTANCE'
         throw error
       }
 
@@ -58,7 +58,7 @@ export default class Headers extends ComponentsAbstraction
       && ''    === instance)
       {
         const error = new Error(`Header is not allowed to be empty`)
-        error.code  = 'E_OAS_INVALID_INSTANCE'
+        error.code  = 'E_OAS_INVALID_HEADER_INSTANCE'
         throw error
       }
 
@@ -86,7 +86,7 @@ export default class Headers extends ComponentsAbstraction
     if(false === pointer.startsWith('/components/headers/'))
     {
       const error = new Error(`The ref pointer "${pointer}" must point to a headers component`)
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_HEADER_SPECIFICATION'
       throw error
     }
   }

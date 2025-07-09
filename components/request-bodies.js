@@ -93,7 +93,7 @@ export default class RequestBodies extends ComponentsAbstraction
     if(false === pointer.startsWith('/components/requestBodies/'))
     {
       const error = new Error(`The ref pointer "${pointer}" must point to a requestBodies component`)
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_REQUEST_BODIES_SPECIFICATION'
       throw error
     }
   }
@@ -113,7 +113,7 @@ export default class RequestBodies extends ComponentsAbstraction
     if('[object Object]' !== type)
     {
       const error = new TypeError(`The operation is required to define a "content" attribute in the requestBody of the type object`)
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_REQUEST_BODIES_SPECIFICATION'
       error.cause = `The "content" attribute in the requestBody is of type: ${type}`
       throw error
     }
@@ -121,14 +121,14 @@ export default class RequestBodies extends ComponentsAbstraction
     if(false === !!component.content['application/json'])
     {
       const error = new TypeError(`The operation only supports a defined "application/json" content type in the requestBody`)
-      error.code  = 'E_OAS_UNSUPORTED_SPECIFICATION'
+      error.code  = 'E_OAS_UNSUPORTED_REQUEST_BODIES_SPECIFICATION'
       throw error
     }
 
     if(Object.keys(component.content).length > 1)
     {
       const error = new TypeError(`The operation defines unsupported content type in the operation`)
-      error.code  = 'E_OAS_UNSUPORTED_SPECIFICATION'
+      error.code  = 'E_OAS_UNSUPORTED_REQUEST_BODIES_SPECIFICATION'
       error.cause = `The implementation currently only supports the "application/json" content type`
       throw error
     }

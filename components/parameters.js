@@ -73,7 +73,7 @@ export default class Parameters extends ComponentsAbstraction
     &&(parameter.required || 'path' === parameter.in))
     {
       const error = new Error(`The parameter "${parameter.name}" is required`)
-      error.code  = 'E_OAS_INVALID_INSTANCE'
+      error.code  = 'E_OAS_INVALID_PARAMETER_INSTANCE'
       throw error
     }
 
@@ -105,7 +105,7 @@ export default class Parameters extends ComponentsAbstraction
     if(false === pointer.startsWith('/components/parameters/'))
     {
       const error = new Error(`The ref pointer "${pointer}" must point to a parameters component`)
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_PARAMETER_SPECIFICATION'
       throw error
     }
   }
@@ -117,7 +117,7 @@ export default class Parameters extends ComponentsAbstraction
     if('[object Object]' !== parameterType)
     {
       const error = new Error(`Invalid parameter type ${parameterType}`)
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_PARAMETER_SPECIFICATION'
       error.cause = 'The parameter type must be an [object Object]'
       throw error
     }
@@ -134,35 +134,35 @@ export default class Parameters extends ComponentsAbstraction
     if(false === 'name' in component)
     {
       const error = new Error('The "name" attribute is required')
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_PARAMETER_SPECIFICATION'
       throw error
     }
 
     if(false === 'in' in component)
     {
       const error = new Error('The "in" attribute is required')
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_PARAMETER_SPECIFICATION'
       throw error
     }
 
     if(false === ['path', 'query', 'header', /*'cookie'*/].includes(component.in))
     {
       const error = new Error(`Invalid "in" attribute ${component.in}`)
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_PARAMETER_SPECIFICATION'
       throw error
     }
 
     if('allowReserved' in component)
     {
       const error = new Error('The "allowReserved" attribute is not supported in this implementation')
-      error.code  = 'E_OAS_UNSUPORTED_SPECIFICATION'
+      error.code  = 'E_OAS_UNSUPORTED_PARAMETER_SPECIFICATION'
       throw error
     }
 
     if('style' in component)
     {
       const error = new Error('The "style" attribute is not supported in this implementation')
-      error.code  = 'E_OAS_UNSUPORTED_SPECIFICATION'
+      error.code  = 'E_OAS_UNSUPORTED_PARAMETER_SPECIFICATION'
       throw error
     }
   }

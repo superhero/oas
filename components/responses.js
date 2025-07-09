@@ -59,7 +59,7 @@ export default class Responses extends ComponentsAbstraction
         if(undefined === content)
         {
           const error = new Error(`The content attribute does not specify the only supported content-type "application/json"`)
-          error.code  = 'E_OAS_UNSUPORTED_SPECIFICATION'
+          error.code  = 'E_OAS_UNSUPORTED_RESPONSES_SPECIFICATION'
           error.cause = 'In the future a more flexilbe "content-type" support will be implemented, but for now is not supported'
           throw error
         }
@@ -90,7 +90,7 @@ export default class Responses extends ComponentsAbstraction
         if('[object Object]' !== headerType)
         {
           const error = new Error(`Invalid component attribute type: ${headerType}`)
-          error.code  = 'E_OAS_INVALID_SPECIFICATION'
+          error.code  = 'E_OAS_INVALID_RESPONSES_SPECIFICATION'
           error.cause = 'The header attribute must be of type: [object Object]'
           throw error
         }
@@ -129,7 +129,7 @@ export default class Responses extends ComponentsAbstraction
     if(false === pointer.startsWith('/components/responses/'))
     {
       const error = new Error(`The ref pointer "${pointer}" must point to a responses component`)
-      error.code  = 'E_OAS_INVALID_SPECIFICATION'
+      error.code  = 'E_OAS_INVALID_RESPONSES_SPECIFICATION'
       throw error
     }
   }
