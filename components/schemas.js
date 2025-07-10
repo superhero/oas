@@ -48,7 +48,7 @@ export default class Schemas extends ComponentsAbstraction
   {
     const denormalized = super.denormalize(component)
 
-    if('boolean' === denormalized.type)
+    if('boolean' === typeof denormalized)
     {
       return denormalized
     }
