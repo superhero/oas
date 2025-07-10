@@ -1,4 +1,10 @@
 ---
+#### v4.7.8
+---
+
+Bugfixed denormalization of boolean schemas
+
+---
 #### v4.7.7
 ---
 
