@@ -1,4 +1,18 @@
 ---
+#### v4.7.7
+---
+
+Bugfixed denormalization of boolean schemas
+
+---
+
+Changelog
+
+---
+
+Bugfixed test suite.
+
+---
 #### v4.7.6
 ---
 
