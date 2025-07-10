@@ -48,6 +48,11 @@ export default class Schemas extends ComponentsAbstraction
   {
     const denormalized = super.denormalize(component)
 
+    if('boolean' === denormalized.type)
+    {
+      return denormalized
+    }
+
     if('properties' in component)
     {
       for(const property in denormalized.properties)
@@ -61,15 +66,37 @@ export default class Schemas extends ComponentsAbstraction
 
     const denormalize = this.denormalize.bind(this)
 
-    for(const key of [ 'items', 'prefixItems', 'additionalProperties', 'allOf', 'oneOf', 'anyOf' ])
+    for(const key of [ 'prefixItems', 'allOf', 'oneOf', 'anyOf' ])
     {
       if(key in denormalized)
       {
-        denormalized[key] = [ denormalized[key] ].flat().map(denormalize)
+        if(Array.isArray(denormalized.items))
+        {
+          denormalized[key] = denormalized[key].map(denormalize)
+        }
+        else
+        {
+          const error = new Error(`Invalid "${key}" schema component`)
+          error.code  = 'E_OAS_INVALID_SCHEMAS_SPECIFICATION'
+          error.cause = `The "${key}" schema component must be an array of schemas`
+          throw error
+        }
       }
     }
 
-    for(const key of [ 'if', 'then', 'else', 'not' ])
+    if('items' in denormalized)
+    {
+      if(Array.isArray(denormalized.items))
+      {
+        denormalized.items = denormalized.items.map(denormalize)
+      }
+      else
+      {
+        denormalized.items = this.denormalize(denormalized.items)
+      }
+    }
+
+    for(const key of [ 'additionalProperties', 'if', 'then', 'else', 'not' ])
     {
       if(key in denormalized)
       {

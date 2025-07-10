@@ -477,6 +477,7 @@ suite('@superhero/oas/schemas', () =>
         assert.doesNotThrow(() => schemas.validateComponent(component))
         const instance  = { foo: 'bar' }
         const conformed = schemas.conform(component, instance)
+        assert.ok('foo' in instance)
         assert.deepStrictEqual(conformed, instance)
         component.additionalProperties = false
         assert.deepStrictEqual(schemas.conform(component, instance), {})
