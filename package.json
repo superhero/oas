@@ -1,6 +1,6 @@
 {
   "name": "@superhero/oas",
-  "version": "4.7.12",
+  "version": "4.7.13",
   "description": "OpenAPI Specification (OAS) router",
   "keywords": [
     "OAS",
@@ -18,12 +18,12 @@
     "test": "syntax-check; node --test --test-reporter=@superhero/audit/reporter --experimental-test-coverage"
   },
   "dependencies": {
-    "@superhero/deep": "4.7.12"
+    "@superhero/deep": "4.7.13"
   },
   "devDependencies": {
-    "@superhero/audit": "4.7.12",
+    "@superhero/audit": "4.7.13",
     "@superhero/syntax-check": "0.0.2",
-    "@superhero/locator": "4.7.12"
+    "@superhero/locator": "4.7.13"
   },
   "author": {
     "name": "Erik Landvall",
