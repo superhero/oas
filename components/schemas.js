@@ -124,6 +124,16 @@ export default class Schemas extends ComponentsAbstraction
         throw error
       }
 
+      const componentType = Object.prototype.toString.call(component)
+
+      if('[object Object]' !== componentType)
+      {
+        const error = new Error(`Invalid schema component`)
+        error.code  = 'E_OAS_INVALID_SCHEMAS_SPECIFICATION'
+        error.cause = `The schema component must be of type: [object Object], received: ${componentType}`
+        throw error
+      }
+
       if(component.$ref)
       {
         return this.conformRef(component.$ref, instance, isWriting)
