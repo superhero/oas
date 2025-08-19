@@ -1,4 +1,10 @@
 ---
+#### v4.7.17
+---
+
+throw on invalid schema component type
+
+---
 #### v4.7.16
 ---
 
